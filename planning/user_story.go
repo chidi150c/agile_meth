@@ -1,26 +1,17 @@
-package main
+package planning
 
 import (
+	"ai_agents/agile_meth/model"
 	"fmt"
 )
 
-// UserStory represents a single user story in the backlog
-type UserStory struct {
-	ID              int
-	Description     string
-	Priority        int
-	EstimatedEffort int
-	AssignedTo      string
-	Completed       bool // New field to track the completion status of the user story
-}
-
 // Backlog represents the collection of user stories for the project
 type Backlog struct {
-	UserStories []UserStory
+	UserStories []model.UserStory
 }
 
 // Function to add a new user story to the backlog
-func (b *Backlog) AddUserStory(us UserStory) {
+func (b *Backlog) AddUserStory(us model.UserStory) {
 	b.UserStories = append(b.UserStories, us)
 }
 
@@ -92,35 +83,3 @@ func (b *Backlog) TotalCompletedUserStories() int {
 	return count
 }
 
-func main() {
-	// Create a new backlog
-	backlog := Backlog{}
-
-	// Add some user stories to the backlog
-	backlog.AddUserStory(UserStory{ID: 1, Description: "Implement login functionality", Priority: 1, EstimatedEffort: 8})
-	backlog.AddUserStory(UserStory{ID: 2, Description: "Design homepage layout", Priority: 2, EstimatedEffort: 5})
-	backlog.AddUserStory(UserStory{ID: 3, Description: "Fix bug in user profile page", Priority: 3, EstimatedEffort: 3})
-
-	// Display the backlog
-	backlog.DisplayBacklog()
-
-	// Remove a user story from the backlog
-	backlog.RemoveUserStoryByID(2)
-
-	// Assign a user story to a team member
-	backlog.AssignUserStory(1, "John Doe")
-
-	// Mark a user story as completed
-	backlog.MarkUserStoryCompleted(1)
-
-	// Display the updated backlog
-	backlog.DisplayBacklog()
-
-	// Calculate and display the total estimated effort of all user stories in the backlog
-	totalEffort := backlog.TotalEstimatedEffort()
-	fmt.Printf("Total estimated effort of all user stories in the backlog: %d\n", totalEffort)
-
-	// Calculate and display the total number of completed user stories in the backlog
-	completedUserStories := backlog.TotalCompletedUserStories()
-	fmt.Printf("Total completed user stories in the backlog: %d\n", completedUserStories)
-}
