@@ -67,7 +67,18 @@ func main(){
 	// Add tasks to the user story
 	userStory1.AddTask(model.Task{ID: 1, Description: "Design login form", AssignedTo: "John Doe"})
 	userStory1.AddTask(model.Task{ID: 2, Description: "Backend implementation", AssignedTo: "Jane Smith"})
-	
+    // Assign tasks to team members
+    userStory1.Tasks[0].AssignTo("John Doe")
+    userStory1.Tasks[1].AssignTo("Jane Smith")
+	    
+    // Mark a task as completed within the user story
+    userStory1.MarkTaskCompleted(1)
+    
+    // Calculate and display overall progress of the user story
+    progress := userStory1.Progress()
+    fmt.Printf("Overall Progress of User Story %d: %.2f%%\n", userStory1.ID, progress)
+
+
 	// Function to display all tasks within the user story
     fmt.Printf("Tasks for User Story %d: \n", userStory1.ID)
     for _, task := range userStory1.Tasks {
