@@ -59,6 +59,10 @@ func (s *Sprint) Velocity() float64 {
     completedEffort := float64(s.TotalCompletedEffort())
     return completedEffort / durationDays
 }
+// Function to calculate the remaining effort in the sprint
+func (s *Sprint) RemainingEffort() int {
+    return s.TotalEstimatedEffort() - s.TotalCompletedEffort()
+}
 // Function to mark a user story as completed within the sprint
 func (s *Sprint) MarkUserStoryCompleted(storyID int) {
     for i, story := range s.UserStories {
@@ -89,4 +93,40 @@ func (s *Sprint) SprintVelocity() int {
         }
     }
     return totalEffort
+}
+
+// Function to simulate sprint planning meeting
+func SimulateSprintPlanning(sprint *Sprint, teamCapacity int) {
+    // Calculate total estimated effort of all user stories
+    
+    // Assign user stories to the sprint based on team capacity
+    assignedEffort := 0
+    for i, story := range sprint.UserStories {
+        if assignedEffort+story.EstimatedEffort <= teamCapacity {
+            sprint.UserStories[i].Assigned = true
+            assignedEffort += story.EstimatedEffort
+        } else {
+            break
+        }
+    }
+    fmt.Printf("Sprint Planning: Assigned %d user stories to the sprint.\n", len(sprint.UserStories))
+}
+
+// Function to generate data for burndown chart
+func GenerateBurndownData(sprint *Sprint) ([]float64, []float64) {
+    var days []float64
+    var remainingEffort []float64
+    
+    // Calculate total estimated effort of all user stories
+    totalEstimatedEffort := float64(sprint.TotalEstimatedEffort())
+    remaining := totalEstimatedEffort
+    
+    // Iterate over each day of the sprint
+    for day := 0; day <= int(sprint.EndDate.Sub(sprint.StartDate).Hours()/24); day++ {
+        days = append(days, float64(day))
+        remaining -= float64(sprint.Velocity()) // Assuming constant velocity for simplicity
+        remainingEffort = append(remainingEffort, remaining)
+    }
+    
+    return days, remainingEffort
 }

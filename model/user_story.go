@@ -6,6 +6,7 @@ type UserStory struct {
 	Description     string
 	Priority        int
 	EstimatedEffort int
+	Assigned        bool // Indicates whether the user story is assigned to the sprint
 	AssignedTo      string
 	Completed       bool // New field to track the completion status of the user story
     Tasks           []Task // List of tasks/subtasks for the user story
