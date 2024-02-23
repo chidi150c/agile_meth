@@ -87,3 +87,4 @@ func (b *Backlog) TotalCompletedUserStories() int {
 	return count
 }
 
+

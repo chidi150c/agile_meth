@@ -64,4 +64,18 @@ func main(){
 	fmt.Printf("Total completed effort within Sprint %d: %d\n", sprint.ID, totalCompletedEffort)
 	fmt.Printf("Sprint Velocity for Sprint %d: %.2f effort per day\n", sprint.ID, velocity)
 
+	// Add tasks to the user story
+	userStory1.AddTask(model.Task{ID: 1, Description: "Design login form", AssignedTo: "John Doe"})
+	userStory1.AddTask(model.Task{ID: 2, Description: "Backend implementation", AssignedTo: "Jane Smith"})
+	
+	// Function to display all tasks within the user story
+    fmt.Printf("Tasks for User Story %d: \n", userStory1.ID)
+    for _, task := range userStory1.Tasks {
+        status := "Not Completed"
+        if task.Completed {
+            status = "Completed"
+        }
+        fmt.Printf("ID: %d, Description: %s, Assigned To: %s, Status: %s\n", task.ID, task.Description, task.AssignedTo, status)
+    }
+
 }
