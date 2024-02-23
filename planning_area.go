@@ -72,6 +72,26 @@ func (b *Backlog) MarkUserStoryCompleted(id int) {
 	fmt.Printf("User story with ID %d not found in the backlog.\n", id)
 }
 
+// Function to calculate the total estimated effort of all user stories in the backlog
+func (b *Backlog) TotalEstimatedEffort() int {
+	total := 0
+	for _, us := range b.UserStories {
+		total += us.EstimatedEffort
+	}
+	return total
+}
+
+// Function to calculate the total number of completed user stories in the backlog
+func (b *Backlog) TotalCompletedUserStories() int {
+	count := 0
+	for _, us := range b.UserStories {
+		if us.Completed {
+			count++
+		}
+	}
+	return count
+}
+
 func main() {
 	// Create a new backlog
 	backlog := Backlog{}
@@ -95,4 +115,12 @@ func main() {
 
 	// Display the updated backlog
 	backlog.DisplayBacklog()
+
+	// Calculate and display the total estimated effort of all user stories in the backlog
+	totalEffort := backlog.TotalEstimatedEffort()
+	fmt.Printf("Total estimated effort of all user stories in the backlog: %d\n", totalEffort)
+
+	// Calculate and display the total number of completed user stories in the backlog
+	completedUserStories := backlog.TotalCompletedUserStories()
+	fmt.Printf("Total completed user stories in the backlog: %d\n", completedUserStories)
 }
