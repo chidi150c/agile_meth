@@ -10,6 +10,10 @@ type Backlog struct {
 	UserStories []model.UserStory
 }
 
+
+func NewBacklog ()*Backlog{
+	return &Backlog{}
+}
 // Function to add a new user story to the backlog
 func (b *Backlog) AddUserStory(us model.UserStory) {
 	b.UserStories = append(b.UserStories, us)
