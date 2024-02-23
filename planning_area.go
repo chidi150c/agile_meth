@@ -10,7 +10,8 @@ type UserStory struct {
 	Description     string
 	Priority        int
 	EstimatedEffort int
-	AssignedTo      string // New field to track the team member assigned to the user story
+	AssignedTo      string
+	Completed       bool // New field to track the completion status of the user story
 }
 
 // Backlog represents the collection of user stories for the project
@@ -27,7 +28,11 @@ func (b *Backlog) AddUserStory(us UserStory) {
 func (b *Backlog) DisplayBacklog() {
 	fmt.Println("Project Backlog:")
 	for _, us := range b.UserStories {
-		fmt.Printf("ID: %d, Description: %s, Priority: %d, Estimated Effort: %d, Assigned To: %s\n", us.ID, us.Description, us.Priority, us.EstimatedEffort, us.AssignedTo)
+		status := "Not Completed"
+		if us.Completed {
+			status = "Completed"
+		}
+		fmt.Printf("ID: %d, Description: %s, Priority: %d, Estimated Effort: %d, Assigned To: %s, Status: %s\n", us.ID, us.Description, us.Priority, us.EstimatedEffort, us.AssignedTo, status)
 	}
 }
 
@@ -55,6 +60,18 @@ func (b *Backlog) AssignUserStory(id int, assignee string) {
 	fmt.Printf("User story with ID %d not found in the backlog.\n", id)
 }
 
+// Function to mark a user story as completed
+func (b *Backlog) MarkUserStoryCompleted(id int) {
+	for i, us := range b.UserStories {
+		if us.ID == id {
+			b.UserStories[i].Completed = true
+			fmt.Printf("User story with ID %d has been marked as completed.\n", id)
+			return
+		}
+	}
+	fmt.Printf("User story with ID %d not found in the backlog.\n", id)
+}
+
 func main() {
 	// Create a new backlog
 	backlog := Backlog{}
@@ -72,6 +89,9 @@ func main() {
 
 	// Assign a user story to a team member
 	backlog.AssignUserStory(1, "John Doe")
+
+	// Mark a user story as completed
+	backlog.MarkUserStoryCompleted(1)
 
 	// Display the updated backlog
 	backlog.DisplayBacklog()
