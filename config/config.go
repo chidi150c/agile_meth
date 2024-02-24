@@ -14,7 +14,7 @@ func NewModelConfigs() map[string]ModelConfig{
 		"gpt3": {
 			UserInput : "your_topic_here", // Replace with your actual input
 			ApiKey : os.Getenv("OPENAI_API_KEY"), // Ensure you have set your API key in your environment variables
-			Url : "https://api.openai.com/v1/chat/completions",
+			Url : "https://api.openai.com/v1/assistants",
 			Model: "gpt-3.5-turbo",
 		},
 	}

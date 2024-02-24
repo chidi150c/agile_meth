@@ -36,7 +36,32 @@ type CompletionRequest struct {
 	Model    string `json:"model"`
 	Messages []Message `json:"messages"`
 }
-
+type RequestBody struct{
+	Model string `json:"model"`  //ID of the model to use. You can use the List models API to see all of your available models, or see our Model overview for descriptions of them.
+	Name string `json:"name"`  //The name of the assistant. The maximum length is 256 characters.
+	Description string `json:"description"` //The description of the assistant. The maximum length is 512 characters.
+	Instructions string `json:"instructions"` //The system instructions that the assistant uses. The maximum length is 32768 characters.
+	Tools []Tool `json:"tootls"`  //A list of tool enabled on the assistant. There can be a maximum of 128 tools per assistant. Tools can be of types code_interpreter, retrieval, or function.
+	File_ids []string `json:"file_ids"`//A list of file IDs attached to this assistant. There can be a maximum of 20 files attached to the assistant. Files are ordered by their creation date in ascending order.
+	Metadata map[string]string `json:"metadata"`//Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format. Keys can be a maximum of 64 characters long and values can be a maxium of 512 characters long.
+}
+type Tool struct{
+	CodeInterpreter string `json:"code_interpreter"`
+	Retrieval string `json:"retrieval"`
+	Function string `json:"function"`
+}
+type AsistantsResponse struct{
+	Id string `json:"id"`	//The identifier, which can be referenced in API endpoints.
+	Object string `json:"object"` //The object type, which is always assistant.
+	Created_at int64 `json:"created_at"` //The Unix timestamp (in seconds) for when the assistant was created.
+	Name string `json:"name"` //The name of the assistant. The maximum length is 256 characters.
+	Description string `json:"description"` //The description of the assistant. The maximum length is 512 characters.
+	Model string `json:"model"` //ID of the model to use. You can use the List models API to see all of your available models, or see our Model overview for descriptions of them.
+	Instructions string `json:"instruction"` //The system instructions that the assistant uses. The maximum length is 32768 characters.
+	Tools []Tool `json:"tools"` //A list of tool enabled on the assistant. There can be a maximum of 128 tools per assistant. Tools can be of types code_interpreter, retrieval, or function.
+	File_ids string `json:"file_ids"`//A list of file IDs attached to this assistant. There can be a maximum of 20 files attached to the assistant. Files are ordered by their creation date in ascending order.
+	Metadata map[string]string `json:"metadata"`//Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format. Keys can be a maximum of 64 characters long and values can be a maxium of 512 characters long.
+}
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
@@ -55,6 +80,7 @@ func NewOpenAI(apiKey, url, model string)OpenAI{
 		Model: model,
 	}
 }
+
 func (o *OpenAI)ApiFetch(Messages []Message)(string, error){
 	requestBody := CompletionRequest{
 		Model:    o.Model,
@@ -75,6 +101,7 @@ func (o *OpenAI)ApiFetch(Messages []Message)(string, error){
 
 	// Set headers
 	req.Header.Set("Authorization", "Bearer "+o.ApiKey)
+	req.Header.Set("OpenAI-Beta", "assistants=v1")
 	req.Header.Set("Content-Type", "application/json")
 
 	// Make the request
@@ -105,4 +132,3 @@ func (o *OpenAI)ApiFetch(Messages []Message)(string, error){
 		return "", fmt.Errorf("no content generated")
 	}
 }
-

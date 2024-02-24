@@ -31,7 +31,8 @@ func (d Developer) WorkOn(us *model.UserStory) {
 		{"user", fmt.Sprintf("Description: %s", us.Description)},
 		{"user", fmt.Sprintf("Priority: %d", us.Priority)},
 		{"user", fmt.Sprintf("Estimated Effort: %d", us.EstimatedEffort)},
-		{"system", "Generate code..."},
+		{"user", fmt.Sprintf("Task: %s", us.Tasks[0].Description)},
+		{"system", "Generate code for the task"},
 	}
 	output, err := d.Aiapi.ApiFetch(messages)
 	if err != nil{
