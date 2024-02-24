@@ -1,34 +1,40 @@
 package main
 
 import (
+	"ai_agents/agile_meth/config"
+	"ai_agents/agile_meth/development"
 	"ai_agents/agile_meth/model"
+	"ai_agents/agile_meth/openaiapi"
 	"ai_agents/agile_meth/planning"
-	"fmt"
-	"time"
 )
 
 func main() {
-    // Create a new sprint
-    startDate := time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)
-    endDate := time.Date(2024, time.March, 15, 0, 0, 0, 0, time.UTC)
-    sprint := planning.NewSprint(1, startDate, endDate)
-    
-    // Add user stories to the sprint
-    sprint.AddUserStory(model.UserStory{ID: 1, Description: "Implement login functionality", Priority: 1, EstimatedEffort: 8})
-    sprint.AddUserStory(model.UserStory{ID: 2, Description: "Design homepage layout", Priority: 2, EstimatedEffort: 5})
-    
-    // Simulate sprint planning meeting
-    planning.SimulateSprintPlanning(&sprint, 10) // Assuming team capacity is 10
-    
-    // Generate burndown chart data
-    days, remainingEffort := planning.GenerateBurndownData(&sprint)
-    
-    // Plot burndown chart
-    if err := planning.PlotBurndownChart(days, remainingEffort); err != nil {
-        fmt.Println("Error plotting burndown chart:", err)
-    } else {
-        fmt.Println("Burndown chart saved as burndown_chart.png")
+	c := config.NewModelConfigs()["gpt3"]
+	on := openaiapi.NewOpenAI(c.ApiKey, c.Url, c.Model)
+	// Create instances of team members
+	dev := development.Developer{
+		Name:  "John",
+		Aiapi: on,
+	}
+	// tester := Tester{Name: "Alice"}
+	// designer := Designer{Name: "Bob"}
+    user1 := &model.UserStory{
+    	ID:              1,
+    	Description:     "Implement login functionality",
+    	Priority:        1,
+    	EstimatedEffort: 8,
+    	Assigned:        false,
+    	AssignedTo:      "",
+    	Completed:       false,
+    	Tasks:           []model.Task{
+                            {Description: "create a signin form",},
+                        },
     }
+	// Simulate work on user stories
+	dev.WorkOn(user1)
+
+	// tester.WorkOn(userStory)
+	// designer.WorkOn(userStory)
 }
 
 func SimulateSprintPlanning(sprint *planning.Sprint, i int) {

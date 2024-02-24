@@ -26,7 +26,6 @@ func (us *UserStory) MarkTaskCompleted(taskID int) Error{
     }
     return TaskNotFound
 }
-
 // Function to calculate the overall progress of the user story (percentage of completed tasks)
 func (us *UserStory) Progress() float64 {
     if len(us.Tasks) == 0 {
@@ -103,5 +102,8 @@ func (us *UserStory) BalanceWorkload() {
     }
 }
 
-
+// Define interface for team members
+type TeamMember interface {
+	WorkOn(userStory string)
+}
 
