@@ -135,38 +135,42 @@ func GenerateBurndownData(sprint *Sprint) ([]float64, []float64) {
     return days, remainingEffort
 }
 
+
 // Function to plot the burndown chart
 func PlotBurndownChart(days, remainingEffort []float64) error {
-	// Create a new plot
-	p := plot.New()
-	// Create a new scatter plotter
-	scatter, err := plotter.NewLine(plotter.XYs{
-        // Create a new scatter plotter with markers for data points
-        {X: 1, Y: 2},
-        {X: 3, Y: 4},
-	})
-	if err != nil {
-		return err
-	}
+    // Create a new plot
+    p := plot.New()
 
-	// Add data points to the scatter plotter
-	for i, d := range days {
-		scatter.XYs[i].X = d
-		scatter.XYs[i].Y = remainingEffort[i]
-	}
+    // Create a new scatter plotter with markers for data points
+    scatter, err := plotter.NewScatter(makeXYs(days, remainingEffort))
+    if err != nil {
+        return err
+    }
 
-	// Add the scatter plotter to the plot
-	p.Add(scatter)
+    // Add the scatter plotter to the plot
+    p.Add(scatter)
 
-	// Set plot title and labels
-	p.Title.Text = "Sprint Burndown Chart"
-	p.X.Label.Text = "Day"
-	p.Y.Label.Text = "Remaining Effort"
+    // Set plot title and labels
+    p.Title.Text = "Sprint Burndown Chart"
+    p.X.Label.Text = "Day"
+    p.Y.Label.Text = "Remaining Effort"
 
-	// Save the plot to a PNG file
-	if err := p.Save(10*vg.Inch, 6*vg.Inch, "burndown_chart.png"); err != nil {
-		return err
-	}
+    // Save the plot to a PNG file
+    if err := p.Save(10*vg.Inch, 6*vg.Inch, "burndown_chart.png"); err != nil {
+        return err
+    }
 
-	return nil
+    return nil
 }
+
+// Helper function to convert days and remainingEffort slices to XYs slice
+func makeXYs(days, remainingEffort []float64) plotter.XYs {
+    xy := make(plotter.XYs, len(days))
+    for i := range days {
+        xy[i].X = days[i]
+        xy[i].Y = remainingEffort[i]
+    }
+    return xy
+}
+
+
