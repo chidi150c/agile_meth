@@ -6,7 +6,6 @@ import (
 	"ai_agents/agile_meth/model"
 	"ai_agents/agile_meth/openaiapi"
 	"ai_agents/agile_meth/planning"
-	"fmt"
 	"log"
 )
 
@@ -22,7 +21,7 @@ func main() {
     if err != nil{
         log.Fatalln(err)
     }
-    Developer_John := development.NewDeveloper("John", asst_id, thred_id, c.ApiKey)
+    Developer_John := development.NewDeveloper("John", asst_id, thred_id, c.ApiKey, c.ThreadUrl)
     user1 := &model.UserStory{
     	ID:              1,
     	Description:     "Implement login functionality",
