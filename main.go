@@ -14,7 +14,7 @@ func main() {
 	c := config.NewModelConfigs()["gpt4"]
 	on := openaiapi.NewOpenAI(c.ApiKey, c.AssistUrl, c.ThreadUrl, c.RunUrl, c.Model)
 	// Create instances of team members
-    asst_id, err := on.Assistants(development.DeveloperInst, "Developer", "code_interpreter")
+    asst_id, err := on.CreateAssistant(development.DeveloperInst, "Developer", "code_interpreter")
     if err != nil{
         log.Fatalln(err)
     }
@@ -23,9 +23,6 @@ func main() {
         log.Fatalln(err)
     }
     Developer_John := development.NewDeveloper("John", asst_id, thred_id, c.ApiKey)
-    fmt.Println("John = ",Developer_John)
-	// tester := Tester{Name: "Alice"}
-	// designer := Designer{Name: "Bob"}
     user1 := &model.UserStory{
     	ID:              1,
     	Description:     "Implement login functionality",

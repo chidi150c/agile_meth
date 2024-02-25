@@ -51,10 +51,12 @@ func NewOpenAI(apiKey, assistUrl, threadUrl, runUrl, model string) OpenAI {
 	return OpenAI{
 		ApiKey:    apiKey,
 		AssistUrl: assistUrl,
+		ThreadUrl: threadUrl,
+		RunUrl:   runUrl,
 		Model:     model,
 	}
 }
-func (o *OpenAI) Assistants(inst, name, tYpe string) (string, error) {
+func (o *OpenAI)CreateAssistant(inst, name, tYpe string) (string, error) {
 	requestBody := RequestBody{
 		Instructions: inst,
 		Name:         name,
@@ -128,40 +130,43 @@ type ThreadRequest struct {
 
 func (o *OpenAI) CreateThread() (string, error) {
 	// Define the request body
-	requestBody := []byte("")
+    requestBody := []byte("")
 
-	// Create a new HTTP request
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/threads", bytes.NewBuffer(requestBody))
-	if err != nil {
-		return "", fmt.Errorf("in Thread Error creating request: %v", err)
-	}
+    // Create a new HTTP request
+    req, err := http.NewRequest("POST", "https://api.openai.com/v1/threads", bytes.NewBuffer(requestBody))
+    if err != nil {
+        return "", fmt.Errorf("in Thread Error creating request: %v", err)
+            }
 
-	// Set request headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("OPENAI_API_KEY"))
-	req.Header.Set("OpenAI-Beta", "assistants=v1")
+    // Set request headers
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Authorization", "Bearer "+os.Getenv("OPENAI_API_KEY"))
+    req.Header.Set("OpenAI-Beta", "assistants=v1")
 
-	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("Error sending request: %v", err)
-	}
-	defer resp.Body.Close()
+    // Send the request
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", fmt.Errorf("Error sending request: %v", err)
+            }
+    defer resp.Body.Close()
 
-	// Check response status code
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Unexpected status code: %d", resp.StatusCode)
-	}
+    // Check response status code
+    if resp.StatusCode != http.StatusOK {
+        return "", fmt.Errorf("Unexpected status code: %d", resp.StatusCode)
+        }
 
-	// Print response body
-	responseBody := new(bytes.Buffer)
-	_, err = responseBody.ReadFrom(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("Error reading response body: %v", err)
-	}
-	fmt.Println("Thread Response body:", responseBody.String())
-	return responseBody.String(), nil
+    // Unmarshal the response body into the ThreadResponse struct
+    var threadResponse ThreadResponse
+    if err := json.NewDecoder(resp.Body).Decode(&threadResponse); err != nil {
+        return "", fmt.Errorf("in Thread Unexpected status code: %d", resp.StatusCode)
+    }
+    // Print the response data
+    fmt.Println("Thread ID:", threadResponse.ID)
+    fmt.Println("Object:", threadResponse.Object)
+    fmt.Println("Created At:", threadResponse.CreatedAt)
+    fmt.Println("Metadata:", threadResponse.Metadata)
+	return  threadResponse.ID, nil
 }
 
 // func retrieveThread(threadID string) (Thread, error) {
