@@ -6,16 +6,24 @@ import (
 	"ai_agents/agile_meth/model"
 	"ai_agents/agile_meth/openaiapi"
 	"ai_agents/agile_meth/planning"
+	"fmt"
+	"log"
 )
 
 func main() {
-	c := config.NewModelConfigs()["gpt3"]
-	on := openaiapi.NewOpenAI(c.ApiKey, c.Url, c.Model)
+	c := config.NewModelConfigs()["gpt4"]
+	on := openaiapi.NewOpenAI(c.ApiKey, c.AssistUrl, c.ThreadUrl, c.RunUrl, c.Model)
 	// Create instances of team members
-	dev := development.Developer{
-		Name:  "John",
-		Aiapi: on,
-	}
+    asst_id, err := on.Assistants(development.DeveloperInst, "Developer", "code_interpreter")
+    if err != nil{
+        log.Fatalln(err)
+    }
+    thred_id, err := on.CreateThread()
+    if err != nil{
+        log.Fatalln(err)
+    }
+    Developer_John := development.NewDeveloper("John", asst_id, thred_id, c.ApiKey)
+    fmt.Println("John = ",Developer_John)
 	// tester := Tester{Name: "Alice"}
 	// designer := Designer{Name: "Bob"}
     user1 := &model.UserStory{
@@ -31,7 +39,7 @@ func main() {
                         },
     }
 	// Simulate work on user stories
-	dev.WorkOn(user1)
+	Developer_John.WorkOn(user1)
 
 	// tester.WorkOn(userStory)
 	// designer.WorkOn(userStory)

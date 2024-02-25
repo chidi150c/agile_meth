@@ -2,9 +2,10 @@ package development
 
 import (
 	"ai_agents/agile_meth/model"
-	"ai_agents/agile_meth/openaiapi"
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"log"
+	"net/http"
 )
 
 // Define interface for team members
@@ -15,31 +16,62 @@ type TeamMember interface {
 // Developer struct representing a developer team member
 type Developer struct {
 	Name string
-	Aiapi   openaiapi.OpenAI                                     
+	Assistant_id string    
+	Thread_id string  
+	ApiKey string                             
 }
-func MewDeveloper (ai openaiapi.OpenAI)*Developer{
+func NewDeveloper (name string, assistID, threadID, apiKey string)*Developer{
 	return &Developer{
-		Name: "",
-		Aiapi: ai,
+		Name: name,
+		Assistant_id: assistID,
+		Thread_id: threadID,
+		ApiKey: apiKey,
 	}
 }
 // Implement the WorkOn method for Developer
 func (d Developer) WorkOn(us *model.UserStory) {
-	messages := []openaiapi.Message{
-		{"system", fmt.Sprintf("Developer %s is working on the following user story:", d.Name)},
-		{"user", fmt.Sprintf("User Story ID: %d", us.ID)},
-		{"user", fmt.Sprintf("Description: %s", us.Description)},
-		{"user", fmt.Sprintf("Priority: %d", us.Priority)},
-		{"user", fmt.Sprintf("Estimated Effort: %d", us.EstimatedEffort)},
-		{"user", fmt.Sprintf("Task: %s", us.Tasks[0].Description)},
-		{"system", "Generate code for the task"},
+	// Example thread ID
+	threadID := d.Thread_id
+
+	// Example message content
+	messageContent := "user story: "+us.Description+" immediate task: "+us.Tasks[0].Description
+
+	// Create the request body
+	requestBody := MessageRequestBody{
+		Role:    "user",
+		Content: messageContent,
+		// Add file IDs and metadata as needed
 	}
-	output, err := d.Aiapi.ApiFetch(messages)
-	if err != nil{
-		log.Fatalln(err)
+
+	// Convert the request body to JSON
+	requestBodyJSON, err := json.Marshal(requestBody)
+	if err != nil {
+		fmt.Println("Error marshaling request body:", err)
+		return
 	}
-	fmt.Printf("Developer %s is coding user story\n", d.Name)
-	fmt.Printf("Now done with output as follows:\n %s \n", output)
+
+	// Send the POST request to create the message
+	url := fmt.Sprintf("https://api.openai.com/v1/threads/%s/messages", threadID)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBodyJSON))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+d.ApiKey)
+	req.Header.Set("OpenAI-Beta", "assistants=v1")
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("Message created successfully!")
+
 }
 
 // Tester struct representing a tester team member
@@ -61,3 +93,13 @@ type Designer struct {
 func (d Designer) WorkOn(userStory string) {
 	fmt.Printf("Designer %s is designing user story: %s\n", d.Name, userStory)
 }
+
+type MessageRequestBody struct {
+    Role     string            `json:"role"`
+    Content  string            `json:"content"`
+    FileIDs  []string          `json:"file_ids,omitempty"`
+    Metadata map[string]string `json:"metadata,omitempty"`
+}
+
+
+
