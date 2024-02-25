@@ -15,26 +15,28 @@ type TeamMember interface {
 
 // Developer struct representing a developer team member
 type Developer struct {
-	Name string
-	Assistant_id string    
-	Thread_id string  
-	ApiKey string                             
+	Name         string
+	Assistant_id string
+	Thread_id    string
+	ApiKey       string
 }
-func NewDeveloper (name string, assistID, threadID, apiKey string)*Developer{
+
+func NewDeveloper(name string, assistID, threadID, apiKey string) *Developer {
 	return &Developer{
-		Name: name,
+		Name:         name,
 		Assistant_id: assistID,
-		Thread_id: threadID,
-		ApiKey: apiKey,
+		Thread_id:    threadID,
+		ApiKey:       apiKey,
 	}
 }
+
 // Implement the WorkOn method for Developer
 func (d Developer) WorkOn(us *model.UserStory) {
 	// Example thread ID
 	threadID := d.Thread_id
 
 	// Example message content
-	messageContent := "user story: "+us.Description+" immediate task: "+us.Tasks[0].Description
+	messageContent := "user story: " + us.Description + " immediate task: " + us.Tasks[0].Description
 
 	// Create the request body
 	requestBody := MessageRequestBody{
@@ -95,11 +97,8 @@ func (d Designer) WorkOn(userStory string) {
 }
 
 type MessageRequestBody struct {
-    Role     string            `json:"role"`
-    Content  string            `json:"content"`
-    FileIDs  []string          `json:"file_ids,omitempty"`
-    Metadata map[string]string `json:"metadata,omitempty"`
+	Role     string            `json:"role"`
+	Content  string            `json:"content"`
+	FileIDs  []string          `json:"file_ids,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
-
-
-
