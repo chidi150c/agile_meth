@@ -15,26 +15,23 @@ type TeamMember interface {
 
 // Developer struct representing a developer team member
 type Developer struct {
-	Name         string
-	Assistant_id string
-	Thread_id    string
-	ApiKey       string
+	Name        string
+	AssistantID string
+	ThreadID    string
+	ApiKey      string
 }
 
-func NewDeveloper(name string, assistID, threadID, apiKey string) *Developer {
+func NewDeveloper(name, assistID, threadID, apiKey string) *Developer {
 	return &Developer{
-		Name:         name,
-		Assistant_id: assistID,
-		Thread_id:    threadID,
-		ApiKey:       apiKey,
+		Name:        name,
+		AssistantID: assistID,
+		ThreadID:    threadID,
+		ApiKey:      apiKey,
 	}
 }
 
 // Implement the WorkOn method for Developer
 func (d Developer) WorkOn(us *model.UserStory) {
-	// Example thread ID
-	threadID := d.Thread_id
-
 	// Example message content
 	messageContent := "user story: " + us.Description + " immediate task: " + us.Tasks[0].Description
 
@@ -53,7 +50,7 @@ func (d Developer) WorkOn(us *model.UserStory) {
 	}
 
 	// Send the POST request to create the message
-	url := fmt.Sprintf("https://api.openai.com/v1/threads/%s/messages", threadID)
+	url := fmt.Sprintf("https://api.openai.com/v1/threads/%s/messages", d.ThreadID)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBodyJSON))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
@@ -62,7 +59,6 @@ func (d Developer) WorkOn(us *model.UserStory) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+d.ApiKey)
 	req.Header.Set("OpenAI-Beta", "assistants=v1")
-	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -72,8 +68,12 @@ func (d Developer) WorkOn(us *model.UserStory) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("Message created successfully!")
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Message Error: Unexpected status code:", resp.StatusCode)
+		return
+	}
 
+	fmt.Println("Message created successfully!")
 }
 
 // Tester struct representing a tester team member

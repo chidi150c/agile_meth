@@ -86,6 +86,9 @@ func (o *OpenAI)Assistants(inst, name, tYpe string ) (string, error) {
 		return "", fmt.Errorf("error making the request: %v", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("assistant Error: Unexpected status code: %v", resp.StatusCode)
+	}
 
 	// Read the response
 	responseBody, err := io.ReadAll(resp.Body)
@@ -97,9 +100,8 @@ func (o *OpenAI)Assistants(inst, name, tYpe string ) (string, error) {
 	if err := json.Unmarshal(responseBody, &response); err != nil {
 		return "", fmt.Errorf("error parsing the JSON response: %v", err)
 	}
-	fmt.Println(response)
 	fmt.Printf("Assistant_id = %v", response.Id)
-	return "", nil
+	return response.Id, nil
 }
 
 type Thread struct {
@@ -108,10 +110,15 @@ type Thread struct {
 	CreatedAt int64             `json:"created_at"`
 	Metadata  map[string]string `json:"metadata"`
 }
+// RequestBody represents the request body structure
+type ThreadRequest struct {
+    Messages []string            `json:"messages,omitempty"` // A list of messages to start the thread with
+    Metadata map[string]string `json:"metadata,omitempty"` // Set of key-value pairs for additional information
+}
 
 func (o *OpenAI) CreateThread() (string, error) {
 	// Marshal the request body to JSON
-	jsonBody, err := json.Marshal(Thread{})
+	jsonBody, err := json.Marshal(ThreadRequest{Messages: []string{"Agile developer"}})
 	if err != nil {
 		return "", fmt.Errorf("error marshalling the request body: %v", err)
 	}
@@ -135,6 +142,9 @@ func (o *OpenAI) CreateThread() (string, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("thread Error: Unexpected status code: %v", resp.StatusCode)
+	}
 	// Read the response
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -145,9 +155,8 @@ func (o *OpenAI) CreateThread() (string, error) {
 	if err := json.Unmarshal(responseBody, &response); err != nil {
 		return "", fmt.Errorf("error parsing the JSON response: %v", err)
 	}
-	fmt.Println(response)
-	fmt.Printf("Assistant_id = %v", response.Id)
-	return "", nil
+	fmt.Printf("Thread_id = %v", response.Id)
+	return response.Id, nil
 }
 
 // func retrieveThread(threadID string) (Thread, error) {
