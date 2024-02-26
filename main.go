@@ -23,7 +23,7 @@ func main() {
     }
     Developer_John := development.NewDeveloper("John", asst_id, thred_id, c.ApiKey, c.ThreadUrl)
     user1 := &model.UserStory{
-    	ID:              1,
+    	ID:            -  1,
     	Description:     "Implement login functionality",
     	Priority:        1,
     	EstimatedEffort: 8,
