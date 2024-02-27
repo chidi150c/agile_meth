@@ -4,27 +4,18 @@ import (
 	"ai_agents/agile_meth/config"
 	"ai_agents/agile_meth/development"
 	"ai_agents/agile_meth/model"
-	"ai_agents/agile_meth/openaiapi"
+	"ai_agents/agile_meth/openai_api"
 	"ai_agents/agile_meth/planning"
-	"log"
 )
 
 func main() {
 	c := config.NewModelConfigs()["gpt4"]
-	on := openaiapi.NewOpenAI(c.ApiKey, c.AssistUrl, c.ThreadUrl, c.RunUrl, c.Model)
+	on := openai_api.NewOpenAI(c.ApiKey, c.AssistUrl, c.ThreadUrl, c.Model)
 	// Create instances of team members
-    asst_id, err := on.CreateAssistant(development.DeveloperInst, "Developer", "code_interpreter")
-    if err != nil{
-        log.Fatalln(err)
-    }
-    thred_id, err := on.CreateThread()
-    if err != nil{
-        log.Fatalln(err)
-    }
-    Developer_John := development.NewDeveloper("John", asst_id, thred_id, c.ApiKey, c.ThreadUrl)
+    Developer_John := development.NewDeveloper("John", on)
     user1 := &model.UserStory{
     	ID:            -  1,
-    	Description:     "Implement login functionality",
+    	Description:     "As a User, I want a sign-in mechanism, so that I can securely access my personal data and features exclusive to members.",
     	Priority:        1,
     	EstimatedEffort: 8,
     	Assigned:        false,
@@ -35,7 +26,7 @@ func main() {
                         },
     }
 	// Simulate work on user stories
-	Developer_John.WorkOn(user1)
+	Developer_John.CodeUserStory(user1)
 
 	// tester.WorkOn(userStory)
 	// designer.WorkOn(userStory)

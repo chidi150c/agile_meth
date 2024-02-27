@@ -7,7 +7,6 @@ type ModelConfig struct{
 	ApiKey string
 	AssistUrl string
 	ThreadUrl string
-	RunUrl string
 	Model string
 }
 
