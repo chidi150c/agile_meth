@@ -1,4 +1,4 @@
-package openai_api
+package assistants
 
 import (
 	"bytes"
@@ -11,36 +11,34 @@ import (
 )
 
 type OpenAI struct {
-	ApiKey    string
+	ApiKey      string
 	AssistantID string
 	ThreadID    string
-	MessageID string
-	RunID string
-	AssistUrl string
-	ThreadUrl string
-	BaseUrl string
-	Model     string
-}
-
-type OpenAIServicer interface{
-	ProcessAiMessage(msg string)(map[string]string, error)
-	CreateAssistant(inst, name, tYpe string)(string, error)
-	CreateThread()(string, error)
+	MessageID   string
+	RunID       string
+	AssistUrl   string
+	ThreadUrl   string
+	BaseUrl     string
+	Model       string
 }
 
 func NewOpenAI(apiKey, assistUrl, threadUrl, model string) *OpenAI {
 	o := &OpenAI{
-		AssistantID: "asst_z8IngMVMU8VYsZy0wQMGKpvy",
-		ThreadID:  "thread_jqs0TJXMWh6WMhWCVg8CwVw6",
-		ApiKey:    apiKey,
-		AssistUrl: assistUrl,
-		ThreadUrl: threadUrl,
-		Model:     model,
+		// AssistantID: "asst_z8IngMVMU8VYsZy0wQMGKpvy",
+		// ThreadID:  "thread_jqs0TJXMWh6WMhWCVg8CwVw6",
+		// AssistantID: "asst_5ooQZzG1kK3iUGm31497NwD9",
+		// ThreadID:    "thread_usJZp4ZCTUobrugdfuNHEXpQ",
+		AssistantID: "asst_GXNmbJSZeyNyuQOs4qQalKpg",
+		ThreadID: "thread_QJCfWlgio8W6MmOthPDBordU",
+		ApiKey:      apiKey,
+		AssistUrl:   assistUrl,
+		ThreadUrl:   threadUrl,
+		Model:       model,
 	}
-	o.BaseUrl = o.ThreadUrl+"/"+o.ThreadID
+	o.BaseUrl = o.ThreadUrl + "/" + o.ThreadID
 	return o
 }
-func (o *OpenAI)CreateAssistant(inst, name, tYpe string) (string, error) {
+func (o *OpenAI) CreateAssistant(inst, name, tYpe string) (string, error) {
 	requestBody := RequestBody{
 		Instructions: inst,
 		Name:         name,
@@ -93,110 +91,110 @@ func (o *OpenAI)CreateAssistant(inst, name, tYpe string) (string, error) {
 }
 func (o *OpenAI) CreateThread() (string, error) {
 	// Define the request body
-    requestBody := []byte("")
-    // Create a new HTTP request
-    req, err := http.NewRequest("POST", o.ThreadUrl, bytes.NewBuffer(requestBody))
-    if err != nil {
-        return "", fmt.Errorf("in Thread Error creating request: %v", err)
-            }
+	requestBody := []byte("")
+	// Create a new HTTP request
+	req, err := http.NewRequest("POST", o.ThreadUrl, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return "", fmt.Errorf("in Thread Error creating request: %v", err)
+	}
 
-    // Set request headers
-    req.Header.Set("Content-Type", "application/json")
-    req.Header.Set("Authorization", "Bearer "+os.Getenv("OPENAI_API_KEY"))
-    req.Header.Set("OpenAI-Beta", "assistants=v1")
+	// Set request headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("OPENAI_API_KEY"))
+	req.Header.Set("OpenAI-Beta", "assistants=v1")
 
-    // Send the request
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        return "", fmt.Errorf("error sending request: %v", err)
-            }
-    defer resp.Body.Close()
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error sending request: %v", err)
+	}
+	defer resp.Body.Close()
 
-    // Check response status code
-    if resp.StatusCode != http.StatusOK {
-        return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-        }
+	// Check response status code
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
-    // Unmarshal the response body into the ThreadResponse struct
-    var threadResponse ThreadResponse
-    if err := json.NewDecoder(resp.Body).Decode(&threadResponse); err != nil {
-        return "", fmt.Errorf("in Thread Unexpected status code: %d", resp.StatusCode)
-    }
-    // Print the response data
-    fmt.Println("Thread ID:", threadResponse.ID)
-	o.ThreadID = threadResponse.ID            
-	o.BaseUrl = o.ThreadUrl+"/"+o.ThreadID
-	return  threadResponse.ID, nil
+	// Unmarshal the response body into the ThreadResponse struct
+	var threadResponse ThreadResponse
+	if err := json.NewDecoder(resp.Body).Decode(&threadResponse); err != nil {
+		return "", fmt.Errorf("in Thread Unexpected status code: %d", resp.StatusCode)
+	}
+	// Print the response data
+	fmt.Println("Thread ID:", threadResponse.ID)
+	o.ThreadID = threadResponse.ID
+	o.BaseUrl = o.ThreadUrl + "/" + o.ThreadID
+	return threadResponse.ID, nil
 }
+
 // CodeUserStory simulates the developer coding the given user story
-func (o *OpenAI)ProcessAiMessage(msg string)(map[string]string, error){
+func (o *OpenAI) ProcessAiMessage(msg string) (string, error) {
 	// Initialize a map to store the parsed information or actions
-    parsedInfo := make(map[string]string)
-    // Create the request body
+	// Create the request body
 	requestBody := MessageRequestBody{
 		Role:    "user",
 		Content: msg,
 		// Add file IDs and metadata as needed
 	}
-    url := fmt.Sprintf("%s/messages", o.BaseUrl)
-    //Creating user message
-    data, err := o.APICall(url, "ProcessAiMessage", "POST", requestBody)
-    if err != nil{
-        log.Fatalln(err)
-    }else if v, ok := data.(string); ok {
-        o.MessageID = v
-        fmt.Println("Message created successfully!")
-    } 
+	url := fmt.Sprintf("%s/messages", o.BaseUrl)
+	//Creating user message
+	data, err := o.APICall(url, "ProcessAiMessage", "POST", requestBody)
+	if err != nil {
+		log.Fatalln(err)
+	} else if v, ok := data.(string); ok {
+		o.MessageID = v
+		fmt.Println("Message created successfully!")
+	}
 	o.Run()
-	for{
-		if status := o.GetRunStatus(); status == "completed"{
+	for {
+		if status := o.GetRunStatus(); status == "completed" {
+			fmt.Printf("Status = %s \n\n", status)
 			break
 		}
 	}
 	message, err := o.GetMessages()
-	if err != nil{
+	if err != nil {
 		log.Fatalln(err)
 	}
 	// fmt.Println(message)
 	// Initialize a map to store the parsed information or actions
-    parsedInfo["command"] = message
-	return parsedInfo, nil
+	return message, nil
 }
-func (o *OpenAI)Run(){
-    //Creating Run
-    runReq := RunRequest{
-        AssistantID: o.AssistantID,
-        // You can add other fields here as needed
-    }
-	fmt.Println("AssistID = ", o.AssistantID)
-    //Creating Run continues
-    data, err := o.APICall(o.BaseUrl+"/runs", "Run", "POST", runReq)
-    if err != nil{
-        log.Fatalln(err)
-    }else if v, ok := data.(string); ok {
-        o.RunID = v
-    } 
+func (o *OpenAI) Run() {
+	//Creating Run
+	runReq := RunRequest{
+		AssistantID: o.AssistantID,
+		// You can add other fields here as needed
+	}
+	// fmt.Println("AssistID = ", o.AssistantID)
+	//Creating Run continues
+	data, err := o.APICall(o.BaseUrl+"/runs", "Run", "POST", runReq)
+	if err != nil {
+		log.Fatalln(err)
+	} else if v, ok := data.(string); ok {
+		o.RunID = v
+	}
 }
-func (o *OpenAI)GetMessages() (string, error){
-    data, err := o.APICall(fmt.Sprintf("%s/messages/%s", o.BaseUrl, o.MessageID), "GetMessages", "GET", nil)
-    if err != nil{
-        log.Fatalln(err)
-    }else if v, ok := data.(string); ok {
-        return v, nil
-    } 
-    return "", fmt.Errorf("GetMessage Error Something went wrong")
+func (o *OpenAI) GetMessages() (string, error) {
+	data, err := o.APICall(fmt.Sprintf("%s/messages/%s", o.BaseUrl, o.MessageID), "GetMessages", "GET", nil)
+	if err != nil {
+		log.Fatalln(err)
+	} else if v, ok := data.(string); ok {
+		return v, nil
+	}
+	return "", fmt.Errorf("GetMessage Error Something went wrong")
 }
-func (o *OpenAI)GetRunStatus() string{
-    data, err := o.APICall(o.BaseUrl+"/runs/"+o.RunID, "GetRunStatus", "GET", nil)
-    if err != nil{
-        log.Fatalln(err)
-    }else if v, ok := data.(string); ok {
-        return v
-    } 
-    return "GetMessage Error Something went wrong"
+func (o *OpenAI) GetRunStatus() string {
+	data, err := o.APICall(o.BaseUrl+"/runs/"+o.RunID, "GetRunStatus", "GET", nil)
+	if err != nil {
+		log.Fatalln(err)
+	} else if v, ok := data.(string); ok {
+		return v
+	}
+	return "GetMessage Error Something went wrong"
 }
-func (o *OpenAI)APICall(Url, name, method string, requestBody interface{}) (interface{}, error) {
+func (o *OpenAI) APICall(Url, name, method string, requestBody interface{}) (interface{}, error) {
 	// Convert the request body to JSON
 	var (
 		req *http.Request
@@ -247,6 +245,7 @@ func (o *OpenAI)APICall(Url, name, method string, requestBody interface{}) (inte
 		}
 		if name == "Run" {
 			fmt.Println("Status:", runResponse.Status)
+			fmt.Println("Status = in progress...")
 			return runResponse.ID, nil
 		} else if name == "GetRunStatus" {
 			return runResponse.Status, nil

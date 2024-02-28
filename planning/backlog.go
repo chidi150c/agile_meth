@@ -7,15 +7,19 @@ import (
 
 // Backlog represents the collection of user stories for the project
 type Backlog struct {
-	UserStories []model.UserStory
+	UserStories []*model.UserStory
+	VisionGoals []*model.VisionGoal
 }
 
 
 func NewBacklog ()*Backlog{
-	return &Backlog{}
+	return &Backlog{
+		UserStories: make([]*model.UserStory,0),
+    	VisionGoals: make([]*model.VisionGoal,0),
+	}
 }
 // Function to add a new user story to the backlog
-func (b *Backlog) AddUserStory(us model.UserStory) {
+func (b *Backlog) AddUserStory(us *model.UserStory) {
 	b.UserStories = append(b.UserStories, us)
 }
 

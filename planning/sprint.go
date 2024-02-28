@@ -16,6 +16,7 @@ type Sprint struct {
     StartDate    time.Time
     EndDate      time.Time
     UserStories  []model.UserStory // User stories included in the sprint
+    
 }
 
 // Function to create a new sprint with the specified start and end dates

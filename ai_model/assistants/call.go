@@ -1,4 +1,4 @@
-package openai_api
+package assistants
 
 type MessageRequestBody struct {
 	Role     string            `json:"role"`
@@ -61,7 +61,7 @@ type RunResponse struct {
     CancelledAt  int64  `json:"cancelled_at,omitempty"`
     FailedAt     int64  `json:"failed_at,omitempty"`
     CompletedAt  int64  `json:"completed_at,omitempty"`
-    LastError    string `json:"last_error,omitempty"`
+    LastError    interface{} `json:"last_error,omitempty"`
     Model        string `json:"model"`
     Instructions string `json:"instructions,omitempty"`
     Tools        []Tool `json:"tools,omitempty"`
