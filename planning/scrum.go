@@ -143,6 +143,7 @@ func fillClarityQuestions(input string) []model.VisionClarityQuestion {
 }
 
 func fillGoalandReason(v string) *model.VisionGoal {
+	fmt.Println("Here is it:", v)
 	s := strings.Split(v, "Reasoning:")[1]
 	p := strings.Split(s, "Goal:")
 	return &model.VisionGoal{Reason: p[0], Goal: p[1]}
