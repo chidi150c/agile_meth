@@ -3,7 +3,6 @@ package planning
 import (
 	"ai_agents/agile_meth/ai_model"
 	"ai_agents/agile_meth/model"
-	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -13,101 +12,73 @@ import (
 
 // AgileProject represents an Agile project with its backlog of user stories.
 type AgileProject struct {
-	Vision string
+	Vision                 string
 	VisionClarityQuestions []model.VisionClarityQuestion
-	Backlog *Backlog
-	Engine  ai_model.AIServicer
+	Backlog                *Backlog
+	DeveloperEngine                 ai_model.AIServicer
+	QuestionsEngine                 ai_model.AIServicer
+	AnswersEngine                 ai_model.AIServicer
+	ScrumEngine                 ai_model.AIServicer
 }
 
-func NewAgileProject(name string, engine ai_model.AIServicer) *AgileProject {
-	// _, err := engine.CreateAssistant(Prompt2, name, "")
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// _, err = engine.CreateThread()
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	
+func NewAgileProject(name string, deveng, srceng, queeng, anseng ai_model.AIServicer) *AgileProject {
+
 	return &AgileProject{
-		Engine: engine,
 		Backlog: NewBacklog(),
+		DeveloperEngine: deveng,
+		QuestionsEngine: queeng,
+		AnswersEngine: anseng,
+		ScrumEngine: srceng ,
 	}
 }
 
-func fillClarityQuestions(input string) ([]model.VisionClarityQuestion, error) {
-
-	fmt.Printf("input: %s", input)
-	// Regular expressions to extract questions and concepts.
-	questionRegex := regexp.MustCompile(`Question \d+: (.+)`)
-	conceptRegex := regexp.MustCompile(`Concept \d+: (.+)`)
-
-	// Split the input string by newlines to process each line separately.
-	lines := strings.Split(input, "\n")
-
-	// Slice to store the extracted questions and concepts.
-	var visionQuestions []model.VisionClarityQuestion
-
-	// Iterate over each line in the input string.
-	for _, line := range lines {
-		// Try to find a question and concept in the line.
-		questionMatch := questionRegex.FindStringSubmatch(line)
-		conceptMatch := conceptRegex.FindStringSubmatch(line)
-
-		// If both a question and a concept are found in the line, add them to the visionQuestions slice.
-		if len(questionMatch) > 1 && len(conceptMatch) > 1 {
-			visionQuestions = append(visionQuestions, model.VisionClarityQuestion{
-				Question: questionMatch[1],
-				Concept:  conceptMatch[1],
-			})
-		}
+// runQA function simulates the QA process.
+func (project *AgileProject)RunQA(vision string) ([]string, []string) {
+	var questions []string
+	var answers []string
+	questionsNew := project.QuestionsForVisionClarification(vision)
+	for _, question := range questionsNew {
+		answer := project.AnswerQuestionForVisionClarity(question.Question)
+		questions = append(questions, question.Question)
+		answers = append(answers, answer)
 	}
-
-	// Check if any questions and concepts were extracted.
-	if len(visionQuestions) == 0 {
-		return nil, errors.New("no vision clarity questions and concepts found")
+	if len(questionsNew) != len(questions) || len(questionsNew) != len(answers) {
+		panic("Length mismatch")
 	}
-
-	// Print the extracted questions and concepts.
-	for _, q := range visionQuestions {
-		fmt.Printf("Question: %s\n", q.Question)
-		fmt.Printf("Concept: %s\n\n", q.Concept)
-	}
-
-	return visionQuestions, nil
+	return questions, answers
 }
-
-
-func fillGoalandReason(v string)*model.VisionGoal{
-	s := strings.Split(v, "Reasoning:")[1]
-	p := strings.Split(s, "Goal:")
-	return &model.VisionGoal{Reason: p[0], Goal: p[1]}
-}
-// Function to clarify project vision 
-func (project *AgileProject) VisionClarification(vision string) []model.VisionClarityQuestion {
+// Function to clarify project vision
+func (project *AgileProject) QuestionsForVisionClarification(vision string) []model.VisionClarityQuestion {
 	project.Vision = vision
-	goals, err := project.Engine.ProcessAiMessage(vision)
-	if err != nil{
+	goals, err := project.QuestionsEngine.ProcessAiMessage(vision)
+	if err != nil {
 		log.Fatalln(err)
 	}
-	project.VisionClarityQuestions, err = fillClarityQuestions(goals)
-	if err != nil{
-		log.Fatalln(err)
-	}
+	project.VisionClarityQuestions = fillClarityQuestions(goals)
 	return project.VisionClarityQuestions
 }
-
+// AnswerQuestionForVisionClarity function generates an answer for the question using LLM.
+func (project *AgileProject)AnswerQuestionForVisionClarity(question string) string {
+	s := fmt.Sprintf("Vision : %s\nQuestion : %s", project.Vision, question)
+	qaAnswer, err := project.AnswersEngine.ProcessAiMessage(s)
+	if err != nil{
+		log.Fatalln(err)
+	}
+	
+	return strings.Split(qaAnswer,"Answer: ")[1]
+}
 // Function to break down project vision into 5 goals
 func (project *AgileProject) BreakDownVision(vision string) []*model.VisionGoal {
 	project.Vision = vision
-	goals, err := project.Engine.ProcessAiMessage(vision)
-	if err != nil{
+	goals, err := project.ScrumEngine.ProcessAiMessage(vision)
+	if err != nil {
 		log.Fatalln(err)
 	}
 	GoalsAndReasonings := strings.Split(goals, "\n\n")
-	for _, v :=  range GoalsAndReasonings{
-		project.Backlog.VisionGoals = append (project.Backlog.VisionGoals, fillGoalandReason(v))
+	for _, v := range GoalsAndReasonings {
+		project.Backlog.VisionGoals = append(project.Backlog.VisionGoals, fillGoalandReason(v))
 	}
+	fmt.Printf("\nBreakDownVision: Goals: %s \n", goals)
 	return project.Backlog.VisionGoals
 }
 
@@ -136,6 +107,46 @@ func (project *AgileProject) RefineGoalsAndBacklog(newGoals []string) {
 	fmt.Println("Project goals and backlog refined successfully!")
 }
 
+func fillClarityQuestions(input string) []model.VisionClarityQuestion {
+	// Regular expressions to extract questions and goals.
+	questionRegex := regexp.MustCompile(`Question \d+: (.+)`)
+	goalRegex := regexp.MustCompile(`Goal \d+: (.+)`)
+
+	// Slice to store the extracted questions and goals.
+	var visionQuestions []model.VisionClarityQuestion
+
+	// Split the input string by newlines to process each line separately.
+	lines := strings.Split(input, "\n\n")
+	// fmt.Println(lines)
+	// Iterate over each line in the input string.
+	for _, line := range lines {
+		// Try to find a question and goal in the line.
+		questionMatch := questionRegex.FindStringSubmatch(line)
+		goalMatch := goalRegex.FindStringSubmatch(line)
+
+		// If both a question and a goal are found in the line, add them to the visionQuestions slice.
+		if len(questionMatch) > 1 && len(goalMatch) > 1 {
+			visionQuestions = append(visionQuestions, model.VisionClarityQuestion{
+				Question: questionMatch[1],
+				Goal:  goalMatch[1],
+			})
+		}
+	}
+
+	// Print the extracted questions and goals.
+	// for _, q := range visionQuestions {
+	// 	fmt.Printf("Question: %s\n", q.Question)
+	// 	fmt.Printf("Goal: %s\n\n", q.Goal)
+	// }
+
+	return visionQuestions
+}
+
+func fillGoalandReason(v string) *model.VisionGoal {
+	s := strings.Split(v, "Reasoning:")[1]
+	p := strings.Split(s, "Goal:")
+	return &model.VisionGoal{Reason: p[0], Goal: p[1]}
+}
 // // PrintBacklog prints the backlog of user stories.
 // func (project AgileProject) PrintBacklog() {
 // 	fmt.Println("Product Backlog:")
@@ -143,10 +154,6 @@ func (project *AgileProject) RefineGoalsAndBacklog(newGoals []string) {
 // 		fmt.Printf("- %s (Priority: %d)\n", story.Description, story.Priority)
 // 	}
 // }
-
-
-
-
 
 // func main() {
 // 	// Create Agile project
@@ -161,7 +168,7 @@ func (project *AgileProject) RefineGoalsAndBacklog(newGoals []string) {
 // 		"Iterate Based on User Feedback",
 // 	}
 
-	// Populate project backlog with initial goals
+// Populate project backlog with initial goals
 // 	project.Backlog = append(project.Backlog, createUserStories(initialGoals)...)
 
 // 	// Prioritize backlog

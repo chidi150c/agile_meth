@@ -7,5 +7,7 @@ type VisionGoal struct{
 }
 type VisionClarityQuestion struct{
 	Question string
-	Concept string
+	Answer string
+	Goal string
+	Intervention bool
 }

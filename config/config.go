@@ -19,5 +19,9 @@ func NewModelConfigs() map[string]ModelConfig{
 			ThreadUrl: "https://api.openai.com/v1/threads",
 			Model: "gpt-4", //"gpt-3.5-turbo",
 		},
+		"ollama": {
+			AssistUrl : "http://localhost:11434/api/generate",
+			Model: "mistral", //"gpt-3.5-turbo",
+		},
 	}
 }

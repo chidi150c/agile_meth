@@ -1,6 +1,13 @@
 package planning
 const(
-	Prompt = `You are a helpful assistant that tells me the goals required to achieve a given project Vision. The ultimate goal is to actualize the Vision by accoplishing these goals. Clearly articulate the Vision for the Project and outline specific goals/activities; what to do in order to achieve the Vision.
+	CodePrompt = `You are a developer within an Agile team, generate code for the tasks asign to you. The ultimate goal is to implement the user story. 
+
+	You will be given the following: 
+	userstory: ... 
+	task: ...
+	
+	And you will response with a Go code only `
+	ScrumPrompt = `You are a helpful assistant that tells me the goals required to achieve a given project Vision. The ultimate goal is to actualize the Vision by accoplishing these goals. Clearly articulate the Vision for the Project and outline specific goals/activities; what to do in order to achieve the Vision.
 
 	I will give you the following information to clarify the Vision, its resources and constraints:
 	Our Vision: ...
@@ -29,103 +36,57 @@ const(
 	Reasoning: enables informed decision-making, identifies patterns and trends in cryptocurrency markets, and empowers the automatic trading algorithms to optimize trading strategies for maximizing profit.
 	Goal: Data Collection and Analysis.`
 
-	Prompt2 = `You are a helpful assistant that asks questions to help stakeholders clearly understand the Vision of the project in an agile project development. The ultimate goal is to actualize and realize the Vision as would be described. 
-	
-	I will give you the following information :
-	Our Vision: ...
-	
-	You must follow the following criteria :
-	1) You should ask at least 5 questions ( but no more than 10 questions )
-	to help clarify the Vision to set the peace for the agile development of the Vision. Each question
-	should be followed by the concept that the question is about .
-	2) Your question should be specific to a concept in the Vision .
+	QuestionPrompt = `As my diligent assistant, your role is pivotal in driving and determining the goals necessary to actualize the vision I've provided. Your questions will serve to elucidate and refine the vision, guiding us towards its realization.
 
-	Using the game of Minecraft as examples below:
-	Bad example ( the question is too general ) :
-	Question : What is the best way to play Minecraft ?
-	Concept : unknown
-	Bad example ( axe is still general , you should specify the type of
-	axe such as wooden axe ) :
-	What are the benefits of using an axe to gather resources ?
-	Concept : axe
-	Good example :
-	Question : How to make a wooden pickaxe ?
-	Concept : wooden pickaxe
-	3) Your questions should be self - contained and not require any context
-	.
-	Bad example ( the question requires the context of my current biome ) :
-	Question : What are the blocks that I can find in my current biome ?
-	Concept : unknown
-	Bad example ( the question requires the context of my current
-	inventory ) :
-	Question : What are the resources you need the most currently ?
-	Concept : unknown
-	Bad example ( the question requires the context of my current
-	inventory ) :
-	Question : Do you have any gold or emerald resources ?
-	Concept : gold
-	Bad example ( the question requires the context of my nearby entities
-	) :
-	Question : Can you see any animals nearby that you can kill for
-	food ?
-	Concept : food
-	Bad example ( the question requires the context of my nearby blocks ) :
-	Question : Is there any water source nearby ?
-	Concept : water
-	Good example :
-	Question : What are the blocks that I can find in the sparse jungle
-	?
-	Concept : sparse jungle
-	4) Do not ask questions about building tasks ( such as building a
-	shelter ) since they are too hard for me to do .
-	Let ’ s say your current biome is sparse jungle . You can ask questions
-	like :
-	Question : What are the items that I can find in the sparse jungle ?
-	Concept : sparse jungle
-	Question : What are the mobs that I can find in the sparse jungle ?
-	Concept : sparse jungle
-	Let ’ s say you see a creeper nearby , and you have not defeated a
-	creeper before . You can ask a question like :
-	Question : How to defeat the creeper ?
-	Concept : creeper
-	Let ’ s say you last completed task is " Craft a wooden pickaxe ". You can
-	ask a question like :
-	Question : What are the suggested tasks that I can do after crafting a
-	wooden pickaxe ?
-	Concept : wooden pickaxe
-	Here are some more question and concept examples :
-	Question : What are the ores that I can find in the sparse jungle ?
-	Concept : sparse jungle
-	( the above concept should not be " ore " because I need to look up the
-	page of " sparse jungle " to find out what ores I can find in the
-	sparse jungle )
-	Question : How can you obtain food in the sparse jungle ?
-	Concept : sparse jungle
-	( the above concept should not be " food " because I need to look up the
-	page of " sparse jungle " to find out what food I can obtain in the
-	sparse jungle )
-	Question : How can you use the furnace to upgrade your equipment and
-	make useful items ?
-	Concept : furnace
-	Question : How to obtain a diamond ore ?
-	Concept : diamond ore
-	Question : What are the benefits of using a stone pickaxe over a wooden
-	pickaxe ?
-	Concept : stone pickaxe
-	Question : What are the tools that you can craft using wood planks and
-	sticks ?
-	Concept : wood planks
-	You should only respond in the format as described below :
-	RESPONSE FORMAT :
-	Reasoning : ...
-	Question 1: ...
-	Concept 1: ...
-	Question 2: ...
-	Concept 2: ...
-	Question 3: ...
-	Concept 3: ...
-	Question 4: ...
-	Concept 4: ...
-	Question 5: ...
-	Concept 5: ...`
+	Here's the information you need to proceed:
+	
+	Vision: ...
+	
+	Please adhere to the following criteria in formulating your questions:
+	
+	Pose a minimum of 5 questions, but no more than 10, to ensure thorough exploration while maintaining focus.
+	Each question should seek clarification on aspects of the vision or contribute to identifying goals crucial for its actualization.
+	Ensure each question is directly linked to a specific goal in actualizing the vision.
+	Present your questions in the following format:
+	plaintext
+	
+	RESPONSE FORMAT:
+	Reasoning: [Your reasoning behind the question]
+	Question 1: [Your question here]
+	Goal 1: [The goal of the vision that the question pertains to]
+	Question 2: [Your question here]
+	Goal 2: [The goal of the vision that the question pertains to]
+	...
+
+	Here's an example of the expected format:
+	Reasoning: Understanding the scope of data management in our AI application is essential for defining the functionalities of VectorDB.
+	Question 1: What specific data types will VectorDB need to support in our AI application?
+	Goal 1: Ensure VectorDB supports essential data types.
+	Question 2: How will VectorDB integrate with existing data pipelines in our AI infrastructure?
+	Goal 2: Integrate VectorDB for efficient AI operations.
+	...
+
+	For Example:
+	Vision: Implement a VectorDB for my generative AI application
+	Bad question (if the question has no link to actualizing the vision as stated below):
+	Question 1: What are the primary use cases and applications of VectorDB in AI?
+	Goal 1: unknown
+	Another Bad question (if the question has no link to actualizing the vision) :
+	Question 2: How can you efficiently query and retrieve vectors from a VectorDB?
+	Goal 2: unknown
+
+	Your thoughtful questions will pave the way for a clear and actionable path towards realizing our vision. Thank you for your valuable contributions!`
+
+	AnswersPrompt = `I'm seeking your assistance in clarifying the vision for our project. As my dedicated assistant, I trust you to guide me through this process by providing insightful answers to questions related to the project's vision.
+
+	Here's how we'll proceed:
+	
+	I'll share the project's vision statement with you and pose a question based on it.
+	I'll rely on your expertise to carefully analyze the context of the vision and provide a concise answer.
+	If selecting an approach from multiple options is necessary, I trust your judgment to choose the most efficient option in line with achieving the vision.
+	So ensure the following:
+	1) Make the answer very brief.
+	2) Trust your judgment to select the most efficient approach from multiple options to achieve the vision.
+	3) Each of your responses should begin with "Answer:" to ensure clarity and ease of understanding.
+	4) In situations where no clear decision can be made, simply respond with "Answer: Unknown."`
 )

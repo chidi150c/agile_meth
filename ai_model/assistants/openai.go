@@ -24,12 +24,6 @@ type OpenAI struct {
 
 func NewOpenAI(apiKey, assistUrl, threadUrl, model string) *OpenAI {
 	o := &OpenAI{
-		// AssistantID: "asst_z8IngMVMU8VYsZy0wQMGKpvy",
-		// ThreadID:  "thread_jqs0TJXMWh6WMhWCVg8CwVw6",
-		// AssistantID: "asst_5ooQZzG1kK3iUGm31497NwD9",
-		// ThreadID:    "thread_usJZp4ZCTUobrugdfuNHEXpQ",
-		AssistantID: "asst_GXNmbJSZeyNyuQOs4qQalKpg",
-		ThreadID: "thread_QJCfWlgio8W6MmOthPDBordU",
 		ApiKey:      apiKey,
 		AssistUrl:   assistUrl,
 		ThreadUrl:   threadUrl,
