@@ -49,7 +49,7 @@ func NewOllama(url, model string)*Ollama{
 
 func (a *Ollama)ProcessAiMessage(msg string) (string, error){
 	messages := requestMessage{
-		Model: "mistral",
+		Model: "llama2",
 		Prompt: a.SystemMessage+" "+msg,
 		Stream: false,
 	}

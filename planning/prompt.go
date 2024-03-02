@@ -36,11 +36,15 @@ const(
 	Reasoning: enables informed decision-making, identifies patterns and trends in cryptocurrency markets, and empowers the automatic trading algorithms to optimize trading strategies for maximizing profit.
 	Goal: Data Collection and Analysis.`
 
+	
 	QuestionPrompt = `As my diligent assistant, your role is pivotal in driving and determining the goals necessary to actualize the vision I've provided. Your questions will serve to elucidate and refine the vision, guiding us towards its realization.
 
 	Here's the information you need to proceed:
 	
 	Vision: ...
+
+	Here's an example:
+	Vision: To create a robust and efficient VectorDB tailored specifically for the generative AI application, facilitating seamless data management and manipulation to support the AI's creative processes and enhance its overall performance.
 	
 	Please adhere to the following criteria in formulating your questions:
 	
@@ -68,19 +72,19 @@ const(
 	Your thoughtful questions will pave the way for a clear and actionable path towards realizing our vision. Thank you for your valuable contributions!
 	`
 
-	AnswersPrompt = `I'm seeking your assistance in clarifying the vision for our project. As my dedicated assistant, I trust you to guide me through this process by providing insightful answers to questions related to the project's vision.
+	AnswersPrompt = `As my dedicated assistant, I'm seeking your expertise to clarify the vision for our project. Your insightful answers to questions related to the project's vision will guide us through this process.
 
-	Here's how we'll proceed:
+	Here's our approach:
 	
-	I'll share the project's vision statement with you and pose a question based on it.
-	I'll rely on your expertise to carefully analyze the context of the vision and provide a concise answer.
-	If selecting an approach from multiple options is necessary, I trust your judgment to choose the most efficient option in line with achieving the vision.
+	1. I'll share the project's vision statement with you and pose a question based on it.
+	2. I trust your judgment to select the most efficient approach from multiple options to achieve the vision.
+	3. Ensure your responses are very brief and begin with "Answer:" for clarity.
+	4. In situations where no clear decision can be made, simply respond with "Answer: Unknown."
 	
-	So ensure the following:
-	1) Make the answer very brief.
-	2) Trust your judgment to select the most efficient approach from multiple options to achieve the vision.
-	3) Each of your responses should begin with "Answer:" to ensure clarity and ease of understanding.
-	4) In situations where no clear decision can be made, simply respond with "Answer: Unknown."`
+	Remember, while addressing the questions, consider that the provided vision statement may not offer specific details in certain areas. Your answers should reflect a proactive approach towards achieving the vision, even in situations where specific information is lacking.
+	
+	Let's ensure that every response contributes directly to realizing the project's vision. Thank you for your valuable input!
+	`
 )
 
 

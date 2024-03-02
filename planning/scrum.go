@@ -13,7 +13,7 @@ import (
 // AgileProject represents an Agile project with its backlog of user stories.
 type AgileProject struct {
 	Vision                 string
-	VisionClarityQuestions []model.VisionClarityQuestion
+	ConceptGoals []model.ConceptGoal
 	Backlog                *Backlog
 	DeveloperEngine                 ai_model.AIServicer
 	QuestionsEngine                 ai_model.AIServicer
@@ -48,14 +48,14 @@ func (project *AgileProject)RunQA(vision string) ([]string, []string) {
 	return questions, answers
 }
 // Function to clarify project vision
-func (project *AgileProject) QuestionsForVisionClarification(vision string) []model.VisionClarityQuestion {
+func (project *AgileProject) QuestionsForVisionClarification(vision string) []model.ConceptGoal {
 	project.Vision = vision
 	goals, err := project.QuestionsEngine.ProcessAiMessage(vision)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	project.VisionClarityQuestions = fillClarityQuestions(goals)
-	return project.VisionClarityQuestions
+	project.ConceptGoals = fillClarityQuestions(goals)
+	return project.ConceptGoals
 }
 // AnswerQuestionForVisionClarity function generates an answer for the question using LLM.
 func (project *AgileProject)AnswerQuestionForVisionClarity(question string) string {
@@ -74,11 +74,8 @@ func (project *AgileProject) BreakDownVision(vision string) []*model.VisionGoal 
 	if err != nil {
 		log.Fatalln(err)
 	}
-	GoalsAndReasonings := strings.Split(goals, "\n\n")
-	for _, v := range GoalsAndReasonings {
-		project.Backlog.VisionGoals = append(project.Backlog.VisionGoals, fillGoalandReason(v))
-	}
-	fmt.Printf("\nBreakDownVision: Goals: %s \n", goals)
+	// fmt.Printf("virtuallizing Output before split : %v\n\n", goals)
+	project.Backlog.VisionGoals = fillGoalandReason(goals)
 	return project.Backlog.VisionGoals
 }
 
@@ -107,13 +104,13 @@ func (project *AgileProject) RefineGoalsAndBacklog(newGoals []string) {
 	fmt.Println("Project goals and backlog refined successfully!")
 }
 
-func fillClarityQuestions(input string) []model.VisionClarityQuestion {
+func fillClarityQuestions(input string) []model.ConceptGoal {
 	// Regular expressions to extract questions and goals.
 	questionRegex := regexp.MustCompile(`Question \d+: (.+)`)
 	goalRegex := regexp.MustCompile(`Goal \d+: (.+)`)
 
 	// Slice to store the extracted questions and goals.
-	var visionQuestions []model.VisionClarityQuestion
+	var visionQuestions []model.ConceptGoal
 
 	// Split the input string by newlines to process each line separately.
 	lines := strings.Split(input, "\n\n")
@@ -126,27 +123,37 @@ func fillClarityQuestions(input string) []model.VisionClarityQuestion {
 
 		// If both a question and a goal are found in the line, add them to the visionQuestions slice.
 		if len(questionMatch) > 1 && len(goalMatch) > 1 {
-			visionQuestions = append(visionQuestions, model.VisionClarityQuestion{
+			visionQuestions = append(visionQuestions, model.ConceptGoal{
 				Question: questionMatch[1],
 				Goal:  goalMatch[1],
 			})
 		}
 	}
-
-	// Print the extracted questions and goals.
-	// for _, q := range visionQuestions {
-	// 	fmt.Printf("Question: %s\n", q.Question)
-	// 	fmt.Printf("Goal: %s\n\n", q.Goal)
-	// }
-
 	return visionQuestions
 }
 
-func fillGoalandReason(v string) *model.VisionGoal {
-	fmt.Println("Here is it:", v)
-	s := strings.Split(v, "Reasoning:")[1]
-	p := strings.Split(s, "Goal:")
-	return &model.VisionGoal{Reason: p[0], Goal: p[1]}
+// Function to parse the text and fill the VisionGoal struct
+func fillGoalandReason(input string) []*model.VisionGoal {
+	var visionGoals []*model.VisionGoal
+
+	// Split the input into sections based on double newlines
+	lines := strings.Split(input, "\n\n")
+	fmt.Println(lines)
+	reasoningRegex := regexp.MustCompile(`Reasoning: (.*)`)
+	goalRegex := regexp.MustCompile(`Goal: (.*)`)
+	panic("")
+	for _, line := range lines {
+		reasoningMatch := reasoningRegex.FindStringSubmatch(line)
+		goalMatch := goalRegex.FindStringSubmatch(line)
+
+		if reasoningMatch != nil && goalMatch != nil {
+			visionGoals = append(visionGoals, &model.VisionGoal{
+				Reasoning: strings.TrimSpace(reasoningMatch[1]),
+				Goal:      strings.TrimSpace(goalMatch[1]),
+			})
+		}
+	}
+	return visionGoals
 }
 // // PrintBacklog prints the backlog of user stories.
 // func (project AgileProject) PrintBacklog() {
