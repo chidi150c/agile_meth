@@ -36,7 +36,6 @@ const(
 	Reasoning: enables informed decision-making, identifies patterns and trends in cryptocurrency markets, and empowers the automatic trading algorithms to optimize trading strategies for maximizing profit.
 	Goal: Data Collection and Analysis.`
 
-	
 	QuestionPrompt = `As my diligent assistant, your role is pivotal in driving and determining the goals necessary to actualize the vision I've provided. Your questions will serve to elucidate and refine the vision, guiding us towards its realization.
 
 	Here's the information you need to proceed:
