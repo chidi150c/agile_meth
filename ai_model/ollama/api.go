@@ -16,41 +16,43 @@ type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
-type requestMessage struct{
-	Model string `json:"model"`
-	Stream bool `json:"stream"`
+type requestMessage struct {
+	Model    string    `json:"model"`
+	Stream   bool      `json:"stream"`
 	Messages []Message `json:"messages"`
-	Prompt string `json:"prompt"`
+	Prompt   string    `json:"prompt"`
 }
 type Response struct {
-    Model      string    `json:"model"`
-    CreatedAt  time.Time `json:"created_at"`
-    Response   string    `json:"response"` 
-    Done       bool      `json:"done"`
+	Model     string    `json:"model"`
+	CreatedAt time.Time `json:"created_at"`
+	Response  string    `json:"response"`
+	Done      bool      `json:"done"`
 }
+
 // Ollama holds configuration for making requests to the Ollama API.
 // ApiKey is the API key to use for authentication.
 // Url is the base URL of the Ollama API.
 // Model is the name of the AI model to use.
 // Messages is a slice of Message structs to send to the API.
 type Ollama struct {
-	ApiKey   string
-	Url      string
-	Model    string 
+	ApiKey        string
+	Url           string
+	Model         string
 	SystemMessage string
-	Messages []Message
+	Messages      []Message
 }
-func NewOllama(url, model string)*Ollama{
+
+func NewOllama(url, model string) *Ollama {
 	return &Ollama{
-		Url: url, 
+		Url:   url,
 		Model: model,
 	}
 }
 
-func (a *Ollama)ProcessAiMessage(msg string) (string, error){
+func (a *Ollama) ProcessAiMessage(msg string) (string, error) {
 	messages := requestMessage{
-		Model: "llama2",
-		Prompt: a.SystemMessage+" "+msg,
+		Model:  "mistral",
+		Prompt: a.SystemMessage + " " + msg,
 		Stream: false,
 	}
 	resp, err := apiFetch(messages, a.Model, a.Url, a.ApiKey)
@@ -64,15 +66,14 @@ func (a *Ollama)ProcessAiMessage(msg string) (string, error){
 	}
 	return response.Response, nil
 }
-func (a *Ollama)CreateAssistant(inst, name, tYpe string) (string, error){
+func (a *Ollama) CreateAssistant(inst, name, tYpe string) (string, error) {
 	return "", nil
 }
-func (a *Ollama)CreateThread() (string, error){
+func (a *Ollama) CreateThread() (string, error) {
 	return "", nil
 }
 
-
-func apiFetch(msg interface{}, Model, Url, ApiKey string)([]byte, error){
+func apiFetch(msg interface{}, Model, Url, ApiKey string) ([]byte, error) {
 	// Marshal the request body to JSON
 	jsonBody, err := json.Marshal(msg)
 	if err != nil {

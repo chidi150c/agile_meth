@@ -1,4 +1,4 @@
-FROM llama2
+FROM mistral
 PARAMETER temperature 0.5
 SYSTEM """ 
 You are a developer within an Agile team, generate code for the tasks asign to you. The ultimate goal is to implement the user story. 

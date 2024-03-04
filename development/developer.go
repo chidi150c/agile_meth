@@ -19,14 +19,6 @@ type Developer struct {
 }
 
 func NewDeveloper(name string, engine openai_api.OpenAIServicer) *Developer {
-    // _, err := engine.CreateAssistant(DeveloperInst, "Developer", "code_interpreter")
-    // if err != nil{
-    //     log.Fatalln(err)
-    // }
-    // _, err = engine.CreateThread()
-    // if err != nil{
-    //     log.Fatalln(err)
-    // }
 	return &Developer{
 		Name:        name,
         Engine: engine,

@@ -14,7 +14,7 @@ func TestOlama(t *testing.T) {
 
 	// Create JSON request body
 	requestBody := map[string]string{
-		"model":    "llama2",
+		"model":    "mistral",
 		"messages": "Hi",
 	}
 

@@ -19,9 +19,11 @@ type AgileProject struct {
 	QuestionsEngine                 ai_model.AIServicer
 	AnswersEngine                 ai_model.AIServicer
 	ScrumEngine                 ai_model.AIServicer
+	PreSalesEngine   ai_model.AIServicer
+	ResearchBackLog []string
 }
 
-func NewAgileProject(name string, deveng, srceng, queeng, anseng ai_model.AIServicer) *AgileProject {
+func NewAgileProject(name string, deveng, srceng, queeng, anseng, preeng ai_model.AIServicer) *AgileProject {
 
 	return &AgileProject{
 		Backlog: NewBacklog(),
@@ -29,23 +31,36 @@ func NewAgileProject(name string, deveng, srceng, queeng, anseng ai_model.AIServ
 		QuestionsEngine: queeng,
 		AnswersEngine: anseng,
 		ScrumEngine: srceng ,
+		PreSalesEngine: preeng,
 	}
 }
+func (project *AgileProject)VisionArgumentation(vision string)string{
+	questions := project.QuestionsForVisionClarification(vision)
+	vi := ""
+	i := 1
+	fmt.Printf("\n\nBELOW ARE QUESTIONS AND ANSWERS TO CLARIFY THE FEATURES AND CHALLENGES EXPECTED FOR THE VISION")
+    for k, v := range questions{
+        fmt.Printf("\n\nQuestion %d: %s\nGoal %d: %s \n", k+1, v.Question, k+1, v.Goal)
+		v.Answer = project.AnswerQuestionForVisionClarity(v.Question)
+		fmt.Printf("Answer %d: %s", k+1, v.Answer)
+		vi = fmt.Sprintf("Answer: %s", v.Answer)
+		if strings.Contains(vi, "Unknown:"){
+			//send vi to R&D
+			project.ResearchBackLog = append(project.ResearchBackLog, fmt.Sprintf("%s\n%s", v.Question, vi))
+		}else{
+			vi = strings.Replace(vi, "Answer:", "Feature "+fmt.Sprint(i)+":", -1)
+			if i == 1{
+				vision = fmt.Sprintf("%s\n\n%s", vision, vi)
+			}else{
+				vision = fmt.Sprintf("%s\n%s", vision, vi)
+			}
+			i++
+		}
+    }
 
-// runQA function simulates the QA process.
-func (project *AgileProject)RunQA(vision string) ([]string, []string) {
-	var questions []string
-	var answers []string
-	questionsNew := project.QuestionsForVisionClarification(vision)
-	for _, question := range questionsNew {
-		answer := project.AnswerQuestionForVisionClarity(question.Question)
-		questions = append(questions, question.Question)
-		answers = append(answers, answer)
-	}
-	if len(questionsNew) != len(questions) || len(questionsNew) != len(answers) {
-		panic("Length mismatch")
-	}
-	return questions, answers
+	fmt.Printf("\n\nTHE FOLLOWING IS THE UPDATED VISION WITH SOME FEATURES:\n")
+    fmt.Printf("\n%s\n\n", vision)
+	return vision
 }
 // Function to clarify project vision
 func (project *AgileProject) QuestionsForVisionClarification(vision string) []model.ConceptGoal {
@@ -64,11 +79,10 @@ func (project *AgileProject)AnswerQuestionForVisionClarity(question string) stri
 	if err != nil{
 		log.Fatalln(err)
 	}
-	
 	return strings.Split(qaAnswer,"Answer: ")[1]
 }
 // Function to break down project vision into 5 goals
-func (project *AgileProject) BreakDownVision(vision string) []*model.VisionGoal {
+func (project *AgileProject) BreakDownVisionIntoGoals(vision string) []*model.VisionGoal {
 	project.Vision = vision
 	goals, err := project.ScrumEngine.ProcessAiMessage(vision)
 	if err != nil {
@@ -78,9 +92,9 @@ func (project *AgileProject) BreakDownVision(vision string) []*model.VisionGoal 
 	project.Backlog.VisionGoals = fillGoalandReason(goals)
 	return project.Backlog.VisionGoals
 }
-
 // CreateUserStory creates a new user story with the given description and priority.
 func (project *AgileProject) CreateUserStory(description string, priority int) *model.UserStory {
+	description, _ = project.PreSalesEngine.ProcessAiMessage(description)
 	return &model.UserStory{Description: description, Priority: priority}
 }
 
@@ -105,6 +119,7 @@ func (project *AgileProject) RefineGoalsAndBacklog(newGoals []string) {
 }
 
 func fillClarityQuestions(input string) []model.ConceptGoal {
+	// fmt.Printf("\n\nIn fillClarityQuestions start%send\n\n", input)
 	// Regular expressions to extract questions and goals.
 	questionRegex := regexp.MustCompile(`Question \d+: (.+)`)
 	goalRegex := regexp.MustCompile(`Goal \d+: (.+)`)
@@ -134,18 +149,20 @@ func fillClarityQuestions(input string) []model.ConceptGoal {
 
 // Function to parse the text and fill the VisionGoal struct
 func fillGoalandReason(input string) []*model.VisionGoal {
-	var visionGoals []*model.VisionGoal
-
-	// Split the input into sections based on double newlines
-	lines := strings.Split(input, "\n\n")
-	fmt.Println(lines)
-	reasoningRegex := regexp.MustCompile(`Reasoning: (.*)`)
-	goalRegex := regexp.MustCompile(`Goal: (.*)`)
-	panic("")
+	var (
+		visionGoals []*model.VisionGoal
+		reasoningMatch []string
+		goalMatch []string
+	)
+	reasoningRegex := regexp.MustCompile(`Reasoning \d+: (.+)`)
+	goalRegex := regexp.MustCompile(`Goal \d+: (.+)`)
+	lines := strings.Split(input, "\n")
 	for _, line := range lines {
-		reasoningMatch := reasoningRegex.FindStringSubmatch(line)
-		goalMatch := goalRegex.FindStringSubmatch(line)
-
+		if strings.Contains(line, "Reasoning"){
+			reasoningMatch = reasoningRegex.FindStringSubmatch(line)
+		}else if strings.Contains(line, "Goal"){
+			goalMatch = goalRegex.FindStringSubmatch(line)
+		}
 		if reasoningMatch != nil && goalMatch != nil {
 			visionGoals = append(visionGoals, &model.VisionGoal{
 				Reasoning: strings.TrimSpace(reasoningMatch[1]),
