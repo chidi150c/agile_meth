@@ -1,4 +1,5 @@
-package planning
+package chat
+
 const(
 	CodePrompt = `
 	TASK DESCRIPTION:

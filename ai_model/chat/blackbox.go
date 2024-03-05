@@ -45,6 +45,7 @@ type Message struct {
 }
 
 type OpenAI struct{
+	Name string
 	ApiKey string
 	Url string
 	Model string 
@@ -52,8 +53,9 @@ type OpenAI struct{
 	Prompt string
 }
 
-func NewOpenAI(prompt, apiKey, url, model string)*OpenAI{
+func NewOpenAI(name, prompt, apiKey, url, model string)*OpenAI{
 	return &OpenAI{
+		Name: name,
 		ApiKey: apiKey,
 		Url: url, 
 		Model: model,
@@ -61,6 +63,10 @@ func NewOpenAI(prompt, apiKey, url, model string)*OpenAI{
 	}
 }
 var _ ai_model.AIServicer = &OpenAI{}
+
+func (a *OpenAI) GetEngineName()string{
+	return a.Name
+}
 func (a *OpenAI) CreateThread() (string, error) {
 	return "", nil
 }
@@ -99,8 +105,6 @@ func apiFetch(messages []Message, Model, Url, ApiKey string)(string, error){
 	if err != nil {
 		return "", fmt.Errorf("error reading the response body: %v", err)
 	}
-	// fmt.Println("yes=", string(responseBody))
-	// Parse the JSON response
 	var response OpenAIResponse
 	if err := json.Unmarshal(responseBody, &response); err != nil {
 		return "", fmt.Errorf("error parsing the JSON response: %v", err)

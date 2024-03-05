@@ -35,6 +35,7 @@ type Response struct {
 // Model is the name of the AI model to use.
 // Messages is a slice of Message structs to send to the API.
 type Ollama struct {
+	Name string
 	ApiKey        string
 	Url           string
 	Model         string
@@ -42,13 +43,17 @@ type Ollama struct {
 	Messages      []Message
 }
 
-func NewOllama(url, model string) *Ollama {
+func NewOllama(name, prompt, url, model string) *Ollama {
 	return &Ollama{
+		Name: name,
 		Url:   url,
 		Model: model,
+		SystemMessage: prompt,
 	}
 }
-
+func (a *Ollama) GetEngineName()string{
+	return a.Name
+}
 func (a *Ollama) ProcessAiMessage(msg string) (string, error) {
 	messages := requestMessage{
 		Model:  "mistral",

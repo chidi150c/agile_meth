@@ -9,6 +9,7 @@ import (
 type Backlog struct {
 	UserStories []*model.UserStory
 	VisionGoals []*model.VisionGoal
+	Mapping []model.Mapping
 }
 
 
