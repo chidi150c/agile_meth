@@ -2,7 +2,7 @@ package model
 
 // General errors.
 const (
-	TaskNotFound           = Error("Task Not Found")
+	TaskNotFound = Error("Task Not Found")
 )
 
 

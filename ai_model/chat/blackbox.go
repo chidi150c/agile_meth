@@ -2,6 +2,7 @@ package chat
 
 import (
 	"ai_agents/agile_meth/ai_model"
+	"ai_agents/agile_meth/config"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -44,32 +45,22 @@ type Message struct {
 	Content string `json:"content"`
 }
 
-type OpenAI struct{
+type OpenAIModel struct{
 	Name string
 	ApiKey string
 	Url string
 	Model string 
-	Messages []Message 
-	Prompt string
 }
 
-func NewOpenAI(name, prompt, apiKey, url, model string)*OpenAI{
-	return &OpenAI{
-		Name: name,
-		ApiKey: apiKey,
-		Url: url, 
-		Model: model,
-		Prompt: prompt,
+func NewOpenAI(cf config.ModelConfig)*OpenAIModel{
+	return &OpenAIModel{
+		ApiKey: cf.ApiKey,
+		Url: cf.Url, 
+		Model: cf.Model,
 	}
 }
-var _ ai_model.AIServicer = &OpenAI{}
+var _ ai_model.AIModelServicer = &OpenAIModel{}
 
-func (a *OpenAI) GetEngineName()string{
-	return a.Name
-}
-func (a *OpenAI) CreateThread() (string, error) {
-	return "", nil
-}
 func apiFetch(messages []Message, Model, Url, ApiKey string)(string, error){
 	requestBody := CompletionRequest{
 		Model:    Model,
@@ -118,10 +109,10 @@ func apiFetch(messages []Message, Model, Url, ApiKey string)(string, error){
 		return "", fmt.Errorf("no content generated")
 	}
 }
-func (a *OpenAI)ProcessAiMessage(input string) (string, error){
+func (a *OpenAIModel)PromptAI(system, user string) (string, error){
 	var messages = []Message{
-		{"system", a.Prompt},
-		{"user", input},
+		{"system", system},
+		{"user", user},
 	}
 	content, err := apiFetch(messages, a.Model,a.Url, a.ApiKey)
 	if err != nil {

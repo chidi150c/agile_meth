@@ -29,7 +29,7 @@ func NewDeveloper(name string, engine openai_api.OpenAIServicer) *Developer {
 func (d *Developer)CodeUserStory(us *model.UserStory) {
 	// Example message content
 	messageContent := "user story: " + us.Description + " immediate task: " + us.Tasks[0].Description
-    resp, _ := d.Engine.ProcessAiMessage(messageContent)
+    resp, _ := d.Engine.PromptAI(messageContent)
 	fmt.Println(resp["command"])
 }
 // DebugCode simulates the developer debugging the code for the given user story

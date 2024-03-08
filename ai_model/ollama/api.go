@@ -54,7 +54,7 @@ func NewOllama(name, prompt, url, model string) *Ollama {
 func (a *Ollama) GetEngineName()string{
 	return a.Name
 }
-func (a *Ollama) ProcessAiMessage(msg string) (string, error) {
+func (a *Ollama) PromptAI(msg string) (string, error) {
 	messages := requestMessage{
 		Model:  "mistral",
 		Prompt: a.SystemMessage + " " + msg,

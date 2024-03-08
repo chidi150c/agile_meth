@@ -15,7 +15,7 @@ type Sprint struct {
     ID           int
     StartDate    time.Time
     EndDate      time.Time
-    UserStories  []model.UserStory // User stories included in the sprint
+    UserStories  []*model.UserStory // User stories included in the sprint
     
 }
 
@@ -29,7 +29,7 @@ func NewSprint(id int, startDate, endDate time.Time) Sprint {
 }
 
 // Function to add a user story to the sprint
-func (s *Sprint) AddUserStory(us model.UserStory) {
+func (s *Sprint) AddUserStory(us *model.UserStory) {
     s.UserStories = append(s.UserStories, us)
 }
 // Function to calculate the total estimated effort of all user stories in the sprint
