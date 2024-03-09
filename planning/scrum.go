@@ -12,27 +12,25 @@ import (
 
 // Project represents an Agile project with its backlog of user stories.
 type Project struct {
-	ID              int
-	 Vision          *model.Vision
+	ID int
+	//  Vision          *model.Vision
 	// Backlog         *Backlog
-	AI ai_model.AIModelServicer
-	AllBuilder strings.Builder
+	AI              ai_model.AIModelServicer
+	AllBuilder      strings.Builder
+	UmappedBackLog  []string
 	ResearchBackLog []string
 }
 
-func NewProject(ai ai_model.AIModelServicer) *Project {
+func NewProject(ai ai_model.AIModelServicer, vision *model.Vision) *Project {
 	return &Project{
 		// Backlog:         NewBacklog(),
 		AI: ai,
-		Vision: &model.Vision{
-			Goals: make(map[string]*model.Goal),
-			UserStories: make(map[string]*model.UserStory),
-		},
+		// Vision: vision,
 	}
 }
 
 // DeriveGoalsFromVision simulates the process of deriving goals from the given vision using the specified AI model.
-func (pj *Project) DeriveGoalsFromVision(vision *model.Vision) (*model.Vision, []model.Goal, error) {
+func (pj *Project) ActiculatedVision(vision *model.Vision) string {
 	pj.AllBuilder.Reset()
 	goslsForQuestion := pj.QuestionsForVisionClarification(vision)
 	vi := ""
@@ -40,7 +38,7 @@ func (pj *Project) DeriveGoalsFromVision(vision *model.Vision) (*model.Vision, [
 	pj.AllBuilder.WriteString("\n\nBELOW ARE QUESTIONS AND ANSWERS TO CLARIFY THE FEATURES AND CHALLENGES EXPECTED FOR THE VISION")
 	for k, v := range goslsForQuestion {
 		pj.AllBuilder.WriteString(fmt.Sprintf("\n\nQuestion %d: %s\nGoal %d: %s \n", k+1, v.Question, k+1, v.Description))
-		v.Answer = pj.AnswerToQuestionForVisionClarity(v.Question)
+		v.Answer = pj.AnswerToQuestionForVisionClarity(v.Question, vision)
 		pj.AllBuilder.WriteString(fmt.Sprintf("Answer %d: %s", k+1, v.Answer))
 		vi = fmt.Sprintf("Feature %d: %s", i, v.Answer)
 		if strings.Contains(vi, "Unknown:") {
@@ -51,23 +49,15 @@ func (pj *Project) DeriveGoalsFromVision(vision *model.Vision) (*model.Vision, [
 			i++
 		}
 	}
-	
+
 	pj.AllBuilder.WriteString("\n\nTHE FOLLOWING IS THE UPDATED VISION WITH SOME FEATURES:\n")
 	pj.AllBuilder.WriteString(fmt.Sprintf("\n%s\n\n", vision.Description))
-	var goals []model.Goal
-	goals, vision = pj.BreakDownVisionIntoGoals(vision)
-	pj.AllBuilder.WriteString(fmt.Sprintf("THE FOLLOWING ARE %d GOALS TO ACHIEVE THE VISION: %s\n\n", len(goals), vision.UpdatedVision))
-	pj.AllBuilder.WriteString("Goals:\n")
-	for k, v := range vision.DarftedGoals {
-		pj.AllBuilder.WriteString(fmt.Sprintf("%d. %s\n", k+1, v.Description))
-	}
-	fmt.Println((pj.AllBuilder.String()))
-	pj.Vision = vision
-	return vision, goals, nil
+	return vision.Description
 }
+
 // CreateUserStory creates a new user story with the given description and priority.
-func (pj *Project) CreateUserStoriesForTheVision(description string) ([]model.UserStory, error){
-	PreSalesPrompt :=`
+func (pj *Project) CreateUserStoriesForTheVision(vision *model.Vision) ([]model.UserStory, error) {
+	PreSalesPrompt := `
 	TASK DESCRIPTION:
 	You are a helpful Agile Development Team that helps to Identify User Activities and Creating User Stories for a given vision and Prioritizing the user stories based on their importance and impact on achieving the project goals, considering factors such as user needs, feasibility, and alignment with the project vision.
 	
@@ -93,33 +83,36 @@ func (pj *Project) CreateUserStoriesForTheVision(description string) ([]model.Us
 	Priority: Low
 
 	...`
-	var err error
-	description, err = pj.AI.PromptAI(PreSalesPrompt, description)
-	if err != nil{
+	var (
+		err         error
+		description string
+	)
+	description, err = pj.AI.PromptAI(PreSalesPrompt, vision.Description)
+	if err != nil {
 		return nil, err
 	}
-	userStories := pj.fillUserStory(description)
-	pj.AllBuilder.WriteString(fmt.Sprintf("THE FOLLOWING ARE %d USER STORIES OF THE VISION: %s\n\n", len(userStories), pj.Vision.UpdatedVision))
+	userStories := pj.fillUserStory(description, vision)
+	pj.AllBuilder.WriteString(fmt.Sprintf("THE FOLLOWING ARE %d USER STORIES OF THE VISION: %s\n\n", len(userStories), vision.UpdatedVision))
 	pj.AllBuilder.WriteString("\nUser Stories:\n")
 	for k, v := range userStories {
 		pj.AllBuilder.WriteString(fmt.Sprintf("%d. As a user, %s\n", k+1, v.Description))
 	}
 	pj.AllBuilder.WriteString("\n")
-	pj.Vision.DraftedUserStories = userStories
-	fmt.Println((pj.AllBuilder.String()))
-	return pj.Vision.DraftedUserStories, nil
+	vision.DraftedUserStories = userStories
+	// fmt.Println((pj.AllBuilder.String()))
+	return vision.DraftedUserStories, nil
 }
 
-func (pj *Project) MapUserStoriesToGoals() {
+func (pj *Project) MapUserStoriesToGoals(vision *model.Vision) {
 	pj.AllBuilder.Reset()
 	pj.AllBuilder.WriteString("Goals:\n")
-	for k, v := range pj.Vision.DarftedGoals {
-		pj.AllBuilder.WriteString(fmt.Sprintf("%d. %s\n", k+1, v.Description))
+	for _, v := range vision.DraftedGoals {
+		pj.AllBuilder.WriteString(fmt.Sprintf("%d. %s\n", v.ID, v.Description))
 	}
 	pj.AllBuilder.WriteString("\n")
 	pj.AllBuilder.WriteString("\nUser Stories:\n")
-	for k, v := range pj.Vision.DraftedUserStories {
-		pj.AllBuilder.WriteString(fmt.Sprintf("%d. As a user, %s\n", k+1, v.Description))
+	for _, v := range vision.DraftedUserStories {
+		pj.AllBuilder.WriteString(fmt.Sprintf("%d. As a user, %s\n", v.ID, v.Description))
 	}
 	pj.AllBuilder.WriteString("\n")
 
@@ -140,7 +133,9 @@ func (pj *Project) MapUserStoriesToGoals() {
 	- The user story and the corresponding goal.
 	- A 'Reasoning:' label followed by the rationale for the mapping.
 	- A 'Concept:' label followed by the underlying concept that guides the project's development efforts.
-	If a user story does not align with any goal, it should be flagged as an isolated user story with reasonings for the lack of alignment, also following the 'Reasoning:' label.
+	- If a user story does not align with any goal, it should be flagged as an isolated user story with reasonings for the lack of alignment, also following the 'Reasoning:' label.
+	- if a "User Story 2" maps to "Goal 3" and "Goal 6" indicate only "Goal 3", that is, "User Story 2" maps to "Goal 3"
+	- if "User Story 9" and "User Story 10" map to "Goal 6", separate each "User Story [x]" map to "Goal 6" into a separate line
 
 	EXAMPLE INPUT:
 	User Stories:
@@ -154,7 +149,9 @@ func (pj *Project) MapUserStoriesToGoals() {
 	1. User Story 1 maps to Goal 1.
 	Reasoning: The desire to select between trading strategies directly supports the goal of developing a trading system with versatile strategy options.
 	Concept: Versatility in trading strategies.
+
 	...
+	
 	3. User Story 2 does not directly align with any specific goal.
 	Reasoning: The request for personalized recommendations suggests a need for an adaptive AI component, which is not explicitly covered in the outlined goals. This might indicate a new area for development or an extension of existing goals.
 	Concept: Adaptive AI recommendations.
@@ -164,67 +161,81 @@ func (pj *Project) MapUserStoriesToGoals() {
 `
 	output, _ := pj.AI.PromptAI(MappingPrompt, input)
 	// Split the output into individual mappings
-	fmt.Println(output)
 	mappings := strings.Split(output, "\n\n")
 	// Initialize a slice to store parsed mappings
 	var storyMappings []model.UserStory
 	var goalMappings []model.Goal
 	// Parse each mapping
+	fmt.Printf("\nLenght of mapping: %d\n", len(mappings))
 	for _, mapping := range mappings {
 		lines := strings.Split(mapping, "\n")
+		if len(lines) < 3{
+			fmt.Printf("\n\n\nStrange Mapping Omitted!!! %s\n\n\n", mapping)
+			continue
+		}
 		// Extract user story, goal, reasoning, and concept from each mapping
 		reasoning := strings.TrimSpace(strings.Split(lines[1], "Reasoning:")[1])
 		concept := strings.TrimSpace(strings.Split(lines[2], "Concept:")[1])
 		ug := strings.Split(lines[0], ".")[1]
 		if strings.Contains(ug, "does not directly align") {
-			pj.ResearchBackLog = append(pj.ResearchBackLog, fmt.Sprintf("%s: %s\n", concept, reasoning))
+			pj.UmappedBackLog = append(pj.UmappedBackLog, fmt.Sprintf("%s feature\n", concept))
 		} else {
 			reGoal, _ := regexp.Compile(`Goal (\d+)`)
 			reUStory, _ := regexp.Compile(`User Story (\d+)`)
-
-			gid := reGoal.FindStringSubmatch(ug)[1]
-			uid := reUStory.FindStringSubmatch(ug)[1]
-
-			nuid, err := strconv.Atoi(uid)
-			if err != nil{
-				log.Fatalln(err)
+			fmt.Println(ug)			
+			gid := reGoal.FindStringSubmatch(ug)
+			uid := reUStory.FindStringSubmatch(ug)
+			if len(gid) > 1 && len(uid) > 1{
+				nuid, err := strconv.Atoi(uid[1])
+				if err != nil {
+					log.Fatalln(err)
+				}
+				ngid, err := strconv.Atoi(gid[1])
+				if err != nil {
+					log.Fatalln(err)
+				}
+				// Populate the Mapping struct
+				storyMappings = append(storyMappings, model.UserStory{
+					ID:          nuid,
+					MappedGoals: ngid,
+					MapReasoning:   reasoning,
+					Concept:     concept,
+				})
+				// Populate the Mapping struct
+				goalMappings = append(goalMappings, model.Goal{
+					ID:                ngid,
+					MappedUserStories: nuid,
+					MapReasoning:         reasoning,
+					Concept:           concept,
+				})
 			}
-			ngid, err := strconv.Atoi(gid)
-			if err != nil{
-				log.Fatalln(err)
-			}
-			
-			// Populate the Mapping struct
-			storyMappings = append(storyMappings, model.UserStory{
-				ID: nuid,
-				MappedGoals: ngid,
-				Reasoning:          reasoning,
-				Concept:         concept,
-			})
-			// Populate the Mapping struct
-			goalMappings = append(goalMappings, model.Goal{
-				ID: ngid,
-				MappedUserStories: nuid,
-				Reasoning:          reasoning,
-				Concept:         concept,
-			})
 		}
-		
+
 	}
-	
+
 	// Print parsed mappings
 	for _, m := range storyMappings {
-		pj.Vision.DraftedUserStories[m.ID-1].Reasoning = m.Reasoning
-		pj.Vision.DraftedUserStories[m.ID-1].Concept = m.Concept
-		pj.Vision.UserStories[m.Concept] = &pj.Vision.DraftedUserStories[m.ID-1]
-		fmt.Printf("\nUser Story: %d\nGoal: %d\nReasoning: %s\nConcept: %s\n\n", m.ID, m.MappedGoals, m.Reasoning, m.Concept)
+		for k, v := range vision.DraftedUserStories {
+			if _, ok := vision.UserStories[m.Concept]; ((!ok) && m.ID == v.ID) {
+				vision.DraftedUserStories[k].MapReasoning = m.MapReasoning
+				vision.DraftedUserStories[k].Concept = m.Concept
+				vision.DraftedUserStories[k].MappedGoals = m.MappedGoals
+				vision.UserStories[m.Concept] = &vision.DraftedUserStories[k]
+			}
+		}
+		// fmt.Printf("\nUser Story: %d\nGoal: %d\nReasoning: %s\nConcept: %s\n\n", m.ID, m.MappedGoals, m.Reasoning, m.Concept)
 		// pj.AllBuilder.WriteString(fmt.Sprintf("User Story: %d\nGoal: %s\nReasoning: %s\nConcept: %s\n\n", m.ID, m.MappedGoals, m.Reasoning, m.Concept))
 	}
 	for _, m := range goalMappings {
-		pj.Vision.DarftedGoals[m.ID-1].Reasoning = m.Reasoning
-		pj.Vision.DarftedGoals[m.ID-1].Concept = m.Concept
-		pj.Vision.Goals[m.Concept]	= &pj.Vision.DarftedGoals[m.ID-1]
-		fmt.Printf("\nGoal: %d\nUser Story: %d\nReasoning: %s\nConcept: %s\n\n", m.ID, m.MappedUserStories, m.Reasoning, m.Concept)
+		for k, v := range vision.DraftedGoals {
+			if _, ok := vision.Goals[m.Concept]; ((!ok) && m.ID == v.ID) {
+				vision.DraftedGoals[k].MapReasoning = m.MapReasoning
+				vision.DraftedGoals[k].Concept = m.Concept
+				vision.DraftedGoals[k].MappedUserStories = m.MappedUserStories
+				vision.Goals[m.Concept] = &vision.DraftedGoals[k]
+			}
+		}
+		// fmt.Printf("\nGoal: %d\nUser Story: %d\nReasoning: %s\nConcept: %s\n\n", m.ID, m.MappedUserStories, m.Reasoning, m.Concept)
 		// pj.AllBuilder.WriteString(fmt.Sprintf("User Story: %d\nGoal: %s\nReasoning: %s\nConcept: %s\n\n", m.ID, m.MappedGoals, m.Reasoning, m.Concept))
 	}
 }
@@ -232,7 +243,7 @@ func (pj *Project) MapUserStoriesToGoals() {
 // DeriveTasksFromGoal simulates the process of deriving tasks from the given goal.
 func (pj *Project) DeriveTasksFromGoal(goal model.Goal) []model.Task {
 	// Prompt AI model to derive tasks based on the goal
-	
+
 	TasksPrompt := `TASK DESCRIPTION:
 	Break down the provided Goal into smaller, actionable tasks or sub-goals, that can be easily managed and implemented by an Agile Development Team. This will help in planning, tracking progress, and ensuring that each component of the goal is addressed effectively.
 
@@ -267,7 +278,7 @@ func (pj *Project) DeriveTasksFromGoal(goal model.Goal) []model.Task {
 	- Use clear and understandable language to ensure that all team members can easily grasp the tasks and their purposes.
 	`
 	response, err := pj.AI.PromptAI(TasksPrompt, goal.Description)
-	if err != nil{
+	if err != nil {
 		log.Fatalln(err)
 	}
 	// Split the response into individual tasks
@@ -276,14 +287,14 @@ func (pj *Project) DeriveTasksFromGoal(goal model.Goal) []model.Task {
 	for _, desc := range taskDescriptions {
 		tasks = append(tasks, model.Task{Description: strings.TrimSpace(desc)})
 	}
-	return tasks
+	return tasks //hanging
 }
 
-func (pj *Project) BreakDownUserStoryIntoTasks() {
+func (pj *Project) BreakDownUserStoryIntoTasks(vision *model.Vision) {
 	var TaskBuilder strings.Builder
-	TaskBuilder.WriteString(fmt.Sprintf("Vision: %s\n\n", pj.Vision.UpdatedVision))
-	k :=1
-	for _, v := range pj.Vision.UserStories {
+	TaskBuilder.WriteString(fmt.Sprintf("Vision: %s\n\n", vision.UpdatedVision))
+	k := 1
+	for _, v := range vision.UserStories {
 		TaskBuilder.WriteString(fmt.Sprintf("User Story %s: %s\n\n", k, v.Description))
 	}
 
@@ -333,19 +344,19 @@ func (pj *Project) BreakDownUserStoryIntoTasks() {
 	- Consider the technical and resource constraints that may influence the implementation of tasks.
 	- Use clear and understandable language to ensure that all team members can easily grasp the tasks and their purposes.
 	`
-	tasks, err := pj.AI.PromptAI(TasksPrompt,"")
+	tasks, err := pj.AI.PromptAI(TasksPrompt, "")
 	if err != nil {
 		log.Fatalln(err)
 	}
 	fmt.Println("TTTTTaslks=: ", tasks)
 	tasksOfEachUserStories := strings.Split(tasks, "\n\n")
 	for k, v := range tasksOfEachUserStories {
-		_,_ =k,v
+		_, _ = k, v
 		// fmt.Println(v)
 		// tasksOfAUserStory := strings.Split(v, "\n")
 		// for y, v := range tasksOfAUserStory {
 		// 	fmt.Println(v)
-		// 	pj.Vision.UserStories[k].Tasks[]&model.Task{
+		// 	vision.UserStories[k].Tasks[]&model.Task{
 		// 		ID:          y,
 		// 		Description: v,
 		// 	}
@@ -353,8 +364,7 @@ func (pj *Project) BreakDownUserStoryIntoTasks() {
 	}
 }
 
-
-func (pj *Project) QuestionsForVisionClarification(vision *model.Vision) []*model.Goal{
+func (pj *Project) QuestionsForVisionClarification(vision *model.Vision) []*model.Goal {
 	QuestionPrompt := `
     TASK DESCRIPTION:
     As my diligent assistant, your role is pivotal in driving and determining the goals necessary to actualize the vision I've provided. Your questions will serve to guide us towards the realization of the vision.
@@ -385,9 +395,10 @@ func (pj *Project) QuestionsForVisionClarification(vision *model.Vision) []*mode
 	gl := fillClarityQuestions(goals)
 	return gl
 }
+
 // AnswerToQuestionForVisionClarity function generates an answer for the question using LLM.
-func (pj *Project) AnswerToQuestionForVisionClarity(question string) string {
-	input := fmt.Sprintf("Vision : %s\nQuestion : %s", pj.Vision.Description, question)
+func (pj *Project) AnswerToQuestionForVisionClarity(question string, vision *model.Vision) string {
+	input := fmt.Sprintf("Vision : %s\nQuestion : %s", vision.Description, question)
 	AnswersPrompt := `
 	TASK DESCRIPTION:
 	As my dedicated assistant, I'm seeking your expertise to clarify the vision for our project. Your insightful answers to questions related to the project's vision will guide us through this process.
@@ -413,7 +424,51 @@ func (pj *Project) AnswerToQuestionForVisionClarity(question string) string {
 }
 
 // Function to break down pj vision into 5 goals
-func (pj *Project) BreakDownVisionIntoGoals(vision *model.Vision)([]model.Goal, *model.Vision){
+func (pj *Project) BreakDownVisionIntoNextGoals(vision *model.Vision) ([]model.Goal, *model.Vision) {
+	ScrumPrompt := `
+	TASK DESCRIPTION:
+	You are a helpful assistant that tells me the NEXT goals required to achieve a given project Vision. The ultimate goal is to actualize the Vision by accoplishing these goals. Clearly articulate the Vision for the Project and outline specific goals; what to do in order to achieve the Vision. 
+	
+	I will provide already considered goal concepts, so that you generate the next goals whose concept is not yet considered
+
+	INPUT FORMAT:
+	Vision: [I will place the vision statement here]
+	Concept [already used number]: [Already considered concept] 
+	
+	CRITERIA:
+	1. You should act as an agile scrum master.
+	2. Clearly articulate the Vision for the Project.
+	3. Outline specific goals; what to do in order to achieve the Vision.
+	4. Generate atleast 5 Unique NEXT Goals and not more than 10 NEXT Goals, each in a breif sentence.
+	5. Do not include a goal whose concept is already considered
+ 
+	RESPONSE FORMAT:
+	Vision: [Place the clearly articulated vision statement here]
+	Reasoning 1: [Your reasoning for the next goal here]
+	Goal 1: [Your next goal to realize the vision here]
+	Reasoning 2: [Your reasoning for the next goal here]
+	Goal 2: [Your next goal to realize the vision here]
+	Reasoning 3: [Your reasoning for the next goal here]
+	Goal 3: [Your next goal to realize the vision here]
+	...`
+
+	input := fmt.Sprintf("Vision: %s", vision.Description)
+	for k, v := range vision.Goals {
+		input = fmt.Sprintf("%s\nConcept %d: %s", input, v.ID, k)
+	}
+	fmt.Printf("%v", input)
+	goals, err := pj.AI.PromptAI(ScrumPrompt, input)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	vgoals, updateVision := fillGoalandReasoning(goals, vision)
+	vision.UpdatedVision = updateVision //This is a clearly acticulated vision
+	vision.DraftedGoals = vgoals
+	return vgoals, vision
+}
+
+// Function to break down pj vision into 5 goals
+func (pj *Project) BreakDownVisionIntoGoals(vision *model.Vision) ([]model.Goal,*model.Vision) {
 	ScrumPrompt := `
 	TASK DESCRIPTION:
 	You are a helpful assistant that tells me the goals required to achieve a given project Vision. The ultimate goal is to actualize the Vision by accoplishing these goals. Clearly articulate the Vision for the Project and outline specific goals; what to do in order to achieve the Vision.
@@ -428,7 +483,7 @@ func (pj *Project) BreakDownVisionIntoGoals(vision *model.Vision)([]model.Goal, 
 	4. Generate atleast 5 Unique Goals and not more than 10 Goals, each in a breif sentence.
  
 	RESPONSE FORMAT:
-	Vision: [Place the clearly articulated vision statement here]
+	Vision: [Place updated vision statement here]
 	Reasoning 1: [Your reasoning for the first goal here]
 	Goal 1: [Your first goal to realize the vision here]
 	Reasoning 2: [Your reasoning for the next goal here]
@@ -441,48 +496,47 @@ func (pj *Project) BreakDownVisionIntoGoals(vision *model.Vision)([]model.Goal, 
 	if err != nil {
 		log.Fatalln(err)
 	}
-	vgoals, updateVision := fillGoalandReasoning(goals)
+	vgoals, updateVision := fillGoalandReasoning(goals, vision)
 	vision.UpdatedVision = updateVision //This is a clearly acticulated vision
-	vision.DarftedGoals = vgoals
+	vision.DraftedGoals = vgoals
 	return vgoals, vision
 }
 
 func fillClarityQuestions(input string) []*model.Goal {
-    // Define regular expressions to match question and reasoning patterns.
-    questionRegex := regexp.MustCompile(`Question \d+: (.+)`)
-    reasoningRegex := regexp.MustCompile(`Reasoning : (.+)`)
+	// Define regular expressions to match question and reasoning patterns.
+	questionRegex := regexp.MustCompile(`Question \d+: (.+)`)
+	reasoningRegex := regexp.MustCompile(`Reasoning : (.+)`)
 
-    // Slice to store the extracted questions and reasoning.
-    var visionQuestions []*model.Goal
+	// Slice to store the extracted questions and reasoning.
+	var visionQuestions []*model.Goal
 
-    // Split the input string by newlines to process each line separately.
-    lines := strings.Split(input, "\n\n")
+	// Split the input string by newlines to process each line separately.
+	lines := strings.Split(input, "\n\n")
 
-    // Iterate over each line in the input string.
-    for _, line := range lines {
-        // Try to find a question and reasoning in the line.
-        questionMatch := questionRegex.FindStringSubmatch(line)
-        reasoningMatch := reasoningRegex.FindStringSubmatch(line)
+	// Iterate over each line in the input string.
+	for _, line := range lines {
+		// Try to find a question and reasoning in the line.
+		questionMatch := questionRegex.FindStringSubmatch(line)
+		reasoningMatch := reasoningRegex.FindStringSubmatch(line)
 
-        // If both a question and reasoning are found in the line, add them to the visionQuestions slice.
-        if len(questionMatch) > 1 && len(reasoningMatch) > 1 {
-            visionQuestions = append(visionQuestions, &model.Goal{
-                Question:  questionMatch[1],
-                Reasoning: reasoningMatch[1],
-            })
-        } else if len(questionMatch) > 1 {
-            // If only a question is found, add it to the visionQuestions slice without reasoning.
-            visionQuestions = append(visionQuestions, &model.Goal{
-                Question: questionMatch[1],
-            })
-        }
-    }
-    return visionQuestions
+		// If both a question and reasoning are found in the line, add them to the visionQuestions slice.
+		if len(questionMatch) > 1 && len(reasoningMatch) > 1 {
+			visionQuestions = append(visionQuestions, &model.Goal{
+				Question:  questionMatch[1],
+				QuestionReasoning: reasoningMatch[1],
+			})
+		} else if len(questionMatch) > 1 {
+			// If only a question is found, add it to the visionQuestions slice without reasoning.
+			visionQuestions = append(visionQuestions, &model.Goal{
+				Question: questionMatch[1],
+			})
+		}
+	}
+	return visionQuestions
 }
 
-
 // Function to parse the text and fill the VisionGoal struct
-func fillGoalandReasoning(input string) ([]model.Goal, string) {
+func fillGoalandReasoning(input string, vision *model.Vision) ([]model.Goal, string) {
 	var (
 		visionGoals    []model.Goal
 		reasoningMatch []string
@@ -499,15 +553,20 @@ func fillGoalandReasoning(input string) ([]model.Goal, string) {
 		goalMatch = goalRegex.FindStringSubmatch(line)
 		if reasoningMatch != nil && goalMatch != nil {
 			visionGoals = append(visionGoals, model.Goal{
-				Reasoning: strings.TrimSpace(reasoningMatch[1]),
-				Description:      strings.TrimSpace(goalMatch[1]),
+				ID:          <-vision.NextGoalIDChan,
+				GoalReasoning:   strings.TrimSpace(reasoningMatch[1]),
+				Description: strings.TrimSpace(goalMatch[1]),
 			})
 		}
 	}
-	return visionGoals, strings.TrimSpace(visionMatch[1])
+	vi := vision.Description
+	if len(visionMatch) > 1 {
+		vi =strings.TrimSpace(visionMatch[1])
+	}
+	return visionGoals, vi
 }
 
-func (pj *Project) fillUserStory(description string) []model.UserStory {
+func (pj *Project) fillUserStory(description string, vision *model.Vision) []model.UserStory {
 	var (
 		userStories    []model.UserStory
 		userStoryMatch []string
@@ -521,6 +580,7 @@ func (pj *Project) fillUserStory(description string) []model.UserStory {
 		priorityMatch = priorityRegex.FindStringSubmatch(line)
 		if userStoryMatch != nil && priorityMatch != nil {
 			userStories = append(userStories, model.UserStory{
+				ID:          <-vision.NextUserStoryIDChan,
 				Description: strings.TrimSpace(userStoryMatch[1]),
 				Priority:    strings.TrimSpace(priorityMatch[1]),
 			})
@@ -528,21 +588,3 @@ func (pj *Project) fillUserStory(description string) []model.UserStory {
 	}
 	return userStories
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
