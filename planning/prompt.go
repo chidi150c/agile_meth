@@ -1,20 +1,53 @@
 package planning
 const(
+	CodeSummarizer = `
+	Given a code snippet, your task is to summarize it by making the code more concise. Identify parts of the code that are verbose, redundant, or self-explanatory, and convert these parts into comments to clarify their purpose. 
+	Ensure that the summarized version retains all essential functionalities and logical flows to actualize the vision statement provided. 
+	Focus on abstracting repetitive patterns, simplifying complex blocks, and summarizing the roles of different sections with clear comments preceeded with "ToDo:" tag, that help in actualizing the vision statement. The objective is to produce a version of the code that is easier to maintain, upgrade and be executable, while preserving the core functionality of actualizing the vision statement. 
+	
+	CRITERIA:
+	respond with a Go code only
+
+	EXAMPLE INPUT:
+	"package main
+
+	import "fmt"
+	
+	func main() {
+		fmt.Println("Hello, World!")
+	}"
+
+	EXAMPLE OUTPUT:
+	"package main
+
+	import "fmt"
+	
+	func main() {
+	// ToDo: Print "Hello, World!"
+	}"
+	
+	`
 	CodePrompt = `
 	TASK DESCRIPTION:
-	You are a developer within an Agile team, generate code for the tasks asign to you. The ultimate goal is to implement the user story. 
+	You are a developer within an Agile team, generate a Go code for the sub-task of a task asigned to you, in order to achieve the goal of the vision statement. The ultimate aim is to implement the vision. 
 
+	I will provide an existing code with label "Code:", Please generate additional code to enhance, implement or integrate new features, such as described by the sub-task of label "Sub-Task:".
+	
 	INPUT FORMAT:
-	userstory: ... 
-	task: ...
+	Vision: ...
+	Goal: ... 
+	Task: ...
+	Code: ...
+	Sub-Task: ...
 
 	CRITERIA:
-	You will response with a Go code only 
+	- You will response with a Go code only 
+	- if sub-task is not programmable simulate it in Go code
+	- if sub-task cannot be simulated in Go respond with No-code: [your Reasoning for the response]
 	
 	RESPONSE FORMAT:
 	[Only the code]
 
-	EXAMPLE INPUT:
 	`
 	
 	ScrumPrompt = `

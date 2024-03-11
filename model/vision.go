@@ -26,6 +26,7 @@ type Goal struct {
 	Question     string
 	Answer       string
 	Completed       bool   // New field to track the completion status of the user story
+	Tasks           []*Task // List of tasks/subtasks for the user story
 }
 // UserStory represents a single user story in the backlog
 type UserStory struct {
@@ -45,6 +46,7 @@ type UserStory struct {
 type Task struct {
 	ID int
 	Description string
+	SubTask []string
 }
 
 func NewVision()*Vision{
