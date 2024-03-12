@@ -1,5 +1,44 @@
 package planning
 const(
+	InitialFramework = `I am working on a project that follows a specific framework for achieving goals, where each goal has associated tasks represented as methods in Go. The overarching vision of the project is to enhance overall customer experience.
+
+	In this framework, each task that helps achieve a goal is represented as a method attached to the Goal struct in Go. For instance, tasks like conducting a customer feedback survey and improving response time would be methods defined within the Goal struct. These methods encapsulate actions specific to achieving their respective goal.
+	
+	Could you generate a Go code snippet that defines:
+	1. A Goal struct with a description field.
+	2. Methods attached to the Goal struct to represent tasks, such as ConductCustomerFeedbackSurvey and ImproveResponseTime.
+	3. An example instantiation of a Goal object related to a sample goal, and demonstrate executing each task method individually.
+	
+	The code should demonstrate the structure where tasks are Go methods on the Goal struct, aiming to achieve the outlined vision through specified goals.
+	`
+DefineStructs = `// Vision represents the overarching objective of the project.
+type Vision struct {
+	ID int
+	NextGoalIDChan chan int
+	NextUserStoryIDChan chan int
+	Description string
+	UpdatedVision string
+	DraftedGoals []Goal
+	DraftedUserStories []UserStory
+	Goals map[string]*Goal
+	UserStories map[string]*UserStory
+}
+
+// Goal represents a specific objective derived from the vision.
+type Goal struct {
+	ID        int
+	GoalReasoning string
+	MapReasoning string
+	QuestionReasoning string
+	Concept   string
+	Description string
+	MappedUserStories int
+	Question     string
+	Answer       string
+	Completed       bool   // New field to track the completion status of the user story
+	Tasks           []*Task // List of tasks/subtasks for the user story
+}`
+
 	CodeSummarizer = `Given a code snippet, your task is to summarize it by making the code more concise. Identify parts of the code that are verbose, redundant, or self-explanatory, and convert these parts into comments to clarify their purpose. Ensure that the summarized version retains all essential functionalities and logical flows. Focus on abstracting repetitive patterns, simplifying complex blocks, and summarizing the roles of different sections with clear comments. The objective is to produce a version of the code that is easier to read, understand, and maintain, while preserving the core functionality. Please provide a brief rationale for each section you convert into comments, explaining how it contributes to the overall code without detailing its exact implementation.
 	
 	CRITERIA:
@@ -24,6 +63,24 @@ const(
 	}"
 	
 	`
+	Framework = `Generate Go code to integrate tasks into a project aimed at enhancing overall customer experience and actualizing the vision as a product. The project follows a framework where goals are represented as a Goal struct and tasks are methods attached to this struct. Each task method should call sub-tasks as separate functions.
+
+	Please provide the following details:
+	1. Vision struct: Description field.
+	2. Goal struct: Description field.
+	3. Task description and reason for each task related to the goal.
+	
+	Based on the provided details, generate Go code to:
+	- Define the Vision struct with the given description.
+	- Define the Goal struct with the given description.
+	- Implement methods for each task, attaching them to the Goal struct. Each task method should call sub-tasks as separate functions.
+	- Integrate the provided tasks into the Goal struct according to the specified structure.
+	
+	Additionally, if the generated code becomes too large for the LLM to handle effectively, implement a summarization strategy. This strategy should involve condensing or commenting out sections of code while preserving the overall logic and structure.
+	
+	Ensure that the generated code is coherent, follows the provided structure, effectively integrates the tasks into the framework, and includes a summarization strategy if necessary.
+	`
+
 	CodePrompt = `
 	TASK DESCRIPTION:
 	You are a developer within an Agile team, generate a Go code for the sub-task of a task asigned to you, in order to achieve the goal of the vision statement. The ultimate aim is to implement the vision. 

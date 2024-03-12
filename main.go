@@ -51,7 +51,7 @@ func main() {
 	)
 	//uncheck
 	_ = goals
-	// fmt.Printf("\nBase Vision: %s\n", vision.Description)
+	fmt.Printf("\nBase Vision: %s\n", vision.Description)
 	// fmt.Printf("\nActiculated Vision: %s\n\n", vacticulated)
 	pj.Fnum = 1
 	pj.FilePath = ""
