@@ -1,33 +1,51 @@
-//   - Include details on the duration, activities involved, and any special accommodations provided.
-package main
+// Allow users to provide detailed information about their pets (e.g., breed, age, special needs).
+// Add Pet struct to User for pet information
+type Pet struct {
+    Name       string
+    Breed      string
+    Age        int
+    SpecialNeeds string
+}
 
-import "fmt"
-
-type Service struct {
-	Name         string
-	Description  string
-	Price        float64
-	Duration     string
-	Activities   string
-	Accommodations string
+// Update User struct to include pets slice
+type User struct {
+    ID       int
+    Name     string
+    Email    string
+    Phone    string
+    Address  string
+    Pets     []Pet
 }
 
 func main() {
-	dogWalking := Service{"Dog Walking", "Professional dog walking service for your beloved pet.", 15.00, "30 minutes", "Walking and exercise for your dog", "N/A"}
-	petSitting := Service{"Pet Sitting", "In-home pet sitting service to make sure your pet is comfortable while you're away.", 25.00, "Per day", "Feeding, playtime, and companionship", "Food and water provided"}
-	boarding := Service{"Boarding", "Safe and secure boarding facility for overnight stays.", 35.00, "Per night", "Playtime, feeding, and socialization", "Individual sleeping area"}
+    // Instantiate a new user with pets
+    user := User{
+        ID:      1,
+        Name:    "Jane Smith",
+        Email:   "jane.smith@example.com",
+        Phone:   "987-654-3210",
+        Address: "456 Oak Avenue",
+        Pets: []Pet{
+            {Name: "Charlie", Breed: "Labrador", Age: 5, SpecialNeeds: "None"},
+            {Name: "Bella", Breed: "Maine Coon", Age: 3, SpecialNeeds: "Allergies"},
+        },
+    }
 
-	printServiceInfo(dogWalking)
-	printServiceInfo(petSitting)
-	printServiceInfo(boarding)
-}
+    // Print user and pet details
+    fmt.Println("User Details:")
+    fmt.Println("ID:", user.ID)
+    fmt.Println("Name:", user.Name)
+    fmt.Println("Email:", user.Email)
+    fmt.Println("Phone:", user.Phone)
+    fmt.Println("Address:", user.Address)
 
-func printServiceInfo(service Service) {
-	fmt.Println("Service: ", service.Name)
-	fmt.Println("Description: ", service.Description)
-	fmt.Println("Price: $", service.Price)
-	fmt.Println("Duration: ", service.Duration)
-	fmt.Println("Activities: ", service.Activities)
-	fmt.Println("Accommodations: ", service.Accommodations)
-	fmt.Println()
+    fmt.Println("\nPets:")
+    for i, pet := range user.Pets {
+        fmt.Printf("Pet %d\n", i+1)
+        fmt.Println("Name:", pet.Name)
+        fmt.Println("Breed:", pet.Breed)
+        fmt.Println("Age:", pet.Age)
+        fmt.Println("Special Needs:", pet.SpecialNeeds)
+        fmt.Println()
+    }
 }

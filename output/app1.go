@@ -1,42 +1,30 @@
-//   - Develop clear and concise descriptions of each service offered (e.g., dog walking, pet sitting, boarding).
+// Determine the required fields for each profile type (e.g., bio, experience, skills, photos).
 package main
 
 import "fmt"
 
-type Service struct {
-	Name        string
-	Description string
-	Price       float64
+type Profile struct {
+    Bio       string
+    Experience int
+    Skills    []string
+    Photos    []string
 }
 
 func main() {
-	dogWalking := Service{
-		Name:        "Dog Walking",
-		Description: "Professional dog walking service for your beloved pet.",
-		Price:       15.00,
-	}
+    ownerProfile := Profile{
+        Bio:       "Passionate pet owner looking for reliable pet sitter",
+        Experience: 5,
+        Skills:    []string{"Dog walking", "Basic grooming"},
+        Photos:    []string{"photo1.jpg", "photo2.jpg"},
+    }
 
-	petSitting := Service{
-		Name:        "Pet Sitting",
-		Description: "In-home pet sitting service to make sure your pet is comfortable while you're away.",
-		Price:       25.00,
-	}
+    sitterProfile := Profile{
+        Bio:       "Experienced pet sitter available for dog and cat care",
+        Experience: 3,
+        Skills:    []string{"Pet training", "First-aid certified"},
+        Photos:    []string{"photo3.jpg", "photo4.jpg"},
+    }
 
-	boarding := Service{
-		Name:        "Boarding",
-		Description: "Safe and secure boarding facility for overnight stays.",
-		Price:       35.00,
-	}
-
-	fmt.Println("Service: ", dogWalking.Name)
-	fmt.Println("Description: ", dogWalking.Description)
-	fmt.Println("Price: $", dogWalking.Price)
-
-	fmt.Println("Service: ", petSitting.Name)
-	fmt.Println("Description: ", petSitting.Description)
-	fmt.Println("Price: $", petSitting.Price)
-
-	fmt.Println("Service: ", boarding.Name)
-	fmt.Println("Description: ", boarding.Description)
-	fmt.Println("Price: $", boarding.Price)
+    fmt.Printf("Owner Profile: %+v\n", ownerProfile)
+    fmt.Printf("Sitter Profile: %+v\n", sitterProfile)
 }

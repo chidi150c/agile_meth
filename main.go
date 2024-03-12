@@ -58,16 +58,16 @@ func main() {
 	for{	
 		pj.VisionEnhancement(vision)
 		for{
-			fmt.Print("\nEnter manual or auto: ")
+			fmt.Print("\nEnter Manual or Automatic (M/a): ")
 			choice, _ := reader.ReadString('\n')
 			choice = strings.TrimSpace(choice)
-			if choice != "manual" && choice != "auto"{
+			if choice != "M" && choice != "a" && choice != "m" && choice != "A" && choice != ""{
 				fmt.Println("\n Invalid Input!!!!")
 				continue
-			}else if choice == "manual"{	
+			}else if choice == "M" || choice == "m" || choice == ""{	
 				pj.ManualRun(vision, reader)	
 				break	
-			}else if choice == "auto"{	
+			}else if choice == "A" || choice == "a"{	
 				pj.AutomaticRun(vision)		
 			}
 		}

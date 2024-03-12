@@ -133,6 +133,8 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 		for k, goal := range vision.Goals {
 			concepts[r] = k
 			fmt.Printf("%d. %s\n", r, goal.Description)
+			fmt.Printf("   Goal Reason: %s\n", goal.GoalReasoning)
+			fmt.Println()
 			r++
 		}
 		fmt.Print("\nEnter a Goal number to implement: ")
@@ -150,7 +152,7 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 		} else {
 			chp <- true
 			goal := vision.Goals[concepts[num]]
-			fmt.Printf("\nGoal: %s\n", goal.Concept)
+			fmt.Printf("Goal: %s\n", goal.Concept)
 			go pj.InProgress(chp)
 			// Derive tasks from each goal
 			Tasks := pj.DeriveTasksFromGoal(goal, vision.Description)
@@ -173,18 +175,18 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 					}
 					fmt.Println("\n Invalid Input!!!!")
 					continue
-				} else {
+				} else{
 					for {
-						task := Tasks[num]
-						fmt.Printf("\n Tasks: %s\n", task.Description)
-						fmt.Printf("\n  Sub-Tasks: \n")
+						task := Tasks[num-1]
+						fmt.Printf("\nTasks: %s\n", task.Description)
+						fmt.Printf("\nSub-Tasks: \n")
 						lengoal = len(task.SubTask)
 						y = 1
 						for _, subtask := range task.SubTask {
-							fmt.Printf("  %d. %s\n", y, subtask)
+							fmt.Printf("%d. %s\n", y, subtask)
 							y++
 						}
-						fmt.Print("\n Enter a Sub-Task number to implement: ")
+						fmt.Print("\nEnter a Sub-Task number to implement: ")
 						choice, _ = reader.ReadString('\n')
 						choice = strings.TrimSpace(choice)
 						num, err := strconv.Atoi(choice)
@@ -196,21 +198,18 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 							continue
 						} else {
 							sub := task.SubTask[num-1]
-							fmt.Printf("\n  Sub-Tasks: %s\n", sub)
+							fmt.Printf("\nSub-Tasks: %s\n", sub)
 							if strings.TrimSpace(sub) != "" {
 								code = pj.Developer(vision.Description, goal.Description, task.Description, sub, code)
 								fmt.Printf("The Code:\n%s\nEnd of Code", code)
 							}
 							fmt.Print("\nEnter your next task or sub-task and Press Enter or Press Enter to continue? \n\n")
 							inputCode, _ := reader.ReadString('\n')
-							go pj.InProgress(chp)
 							inputCode = strings.TrimSpace(inputCode)
 							if inputCode != "" {
 								code = pj.Developer(vision.Description, goal.Description, task.Description, inputCode, code)
-								chp <- true
 								fmt.Printf("The Code:\n%s\nEnd of Code", code)
 							} else {
-								chp <- true
 								code = fmt.Sprintf("%s\nEnhance the provided Go code snippets to integrate:\n", code)
 							}
 						}
@@ -258,16 +257,20 @@ func (pj *Project) AutomaticRun(vision *model.Vision) {
 
 }
 func (pj *Project) Developer(vision, goal, task, sub, code string) string {
+	chp := make(chan bool)
+	go pj.InProgress(chp)
 	code, _ = pj.AI.PromptAI(CodeSummarizer, code)
 	input := fmt.Sprintf("Vision: %s\nGoal: %s\nTask: %s\nCode: %s\nSub-Task: %s\n", vision, goal, task, code, sub)
 	code, _ = pj.AI.PromptAI(CodePrompt, input)
 	if strings.Contains(code, "No-code") {
+		chp <- true		
 		fmt.Printf("\nCurrent task requires your action: %s\n\n", code)
 		return ""
 	}
 	code = strings.Replace(code, "```go", fmt.Sprintf("//%s", sub), -1)
 	code = strings.Replace(code, "```", "", -1)
 	// Define the file path
+	chp <- true		
 	codeOnFile(pj, code)
 	return code
 }
@@ -576,15 +579,11 @@ func (pj *Project) DeriveTasksFromGoal(goal *model.Goal, visionStatement string)
 	- You will break down the goal into smaller, actionable tasks or sub-goals.
 	- Tasks or sub-goals must be clear, concise, and directly related to the original goal.
 	- Include any relevant details or considerations needed to understand and implement the task.
-	- Prioritize tasks or sub-goals that are critical for the goal's completion.
-	- Identify dependencies between tasks or sub-goals where applicable.
 
 	RESPONSE FORMAT:
 	- List the smaller, actionable tasks or sub-goals.
 	- Provide a brief description of each task or sub-story.
-	- If applicable, note any dependencies between tasks.
-	- Highlight any tasks that are particularly critical for achieving the goal's objective.
-
+	
 	EXAMPLE OUTPUT:
 	1. Design a login interface.
 	2. Implement authentication mechanism (e.g., OAuth, JWT).
@@ -612,9 +611,26 @@ func (pj *Project) DeriveTasksFromGoal(goal *model.Goal, visionStatement string)
 		if len(subtask) <= 1 {
 			continue
 		}
+
+		task := subtask[0]
+		if !strings.Contains(task, "."){
+			continue
+		}
+		task = strings.Split(task, ". ")[1]
+
+		subLines := strings.Split(subtask[1], "\n")
+		var newsubtks []string
+		for _, subtask := range subLines {
+			if !strings.Contains(subtask, "-"){
+				continue
+			}
+			subtask = strings.Split(subtask, "-")[1]
+			newsubtks = append(newsubtks, subtask)
+		}
+
 		tasks = append(tasks, &model.Task{
-			Description: subtask[0],
-			SubTask:     strings.Split(subtask[1], "\n"),
+			Description: task,
+			SubTask:     newsubtks,
 		})
 	}
 	goal.Tasks = tasks

@@ -1,9 +1,6 @@
 package planning
 const(
-	CodeSummarizer = `
-	Given a code snippet, your task is to summarize it by making the code more concise. Identify parts of the code that are verbose, redundant, or self-explanatory, and convert these parts into comments to clarify their purpose. 
-	Ensure that the summarized version retains all essential functionalities and logical flows to actualize the vision statement provided. 
-	Focus on abstracting repetitive patterns, simplifying complex blocks, and summarizing the roles of different sections with clear comments preceeded with "ToDo:" tag, that help in actualizing the vision statement. The objective is to produce a version of the code that is easier to maintain, upgrade and be executable, while preserving the core functionality of actualizing the vision statement. 
+	CodeSummarizer = `Given a code snippet, your task is to summarize it by making the code more concise. Identify parts of the code that are verbose, redundant, or self-explanatory, and convert these parts into comments to clarify their purpose. Ensure that the summarized version retains all essential functionalities and logical flows. Focus on abstracting repetitive patterns, simplifying complex blocks, and summarizing the roles of different sections with clear comments. The objective is to produce a version of the code that is easier to read, understand, and maintain, while preserving the core functionality. Please provide a brief rationale for each section you convert into comments, explaining how it contributes to the overall code without detailing its exact implementation.
 	
 	CRITERIA:
 	respond with a Go code only
