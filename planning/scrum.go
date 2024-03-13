@@ -5,19 +5,24 @@ import (
 	"ai_agents/agile_meth/model"
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
-
+type CodeResponse struct{
+	Resoning string
+	Code string
+	Report []string
+}
 // Project represents an Agile project with its backlog of user stories.
 type Project struct {
 	ID int
-	//  Vision          *model.Vision
-	// Backlog         *Backlog
+	Output CodeResponse
 	AI              ai_model.AIModelServicer
 	AllBuilder      strings.Builder
 	UnMappedBackLog []string
@@ -117,16 +122,25 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 	y := 1
 
 	chp := make(chan bool)
-	code := `package main
+	pj.Output.Code = `
+	package main
 
 	import "fmt"
-	
+
+	// Worker interface defines the methods that all workers should implement
+	type Worker interface {
+		
+	}
+
 	func main() {
-		fmt.Println("Hello, World!")
+		
 	}
 	`
+	pj.AllBuilder.Reset()
+	pj.AllBuilder.WriteString(fmt.Sprintf("Vision: %s\n",vision.Description))
 	for {
 		fmt.Printf("\nGoals: \n")
+		pj.AllBuilder.WriteString("\nGoals: \n")
 		lengoal := len(vision.Goals)
 		var concepts = make([]string, lengoal+1)
 		r = 1
@@ -153,12 +167,14 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 			chp <- true
 			goal := vision.Goals[concepts[num]]
 			fmt.Printf("Goal: %s\n", goal.Concept)
+			pj.AllBuilder.WriteString(fmt.Sprintf("Goal %d: %s\n", num, goal.Concept))
 			go pj.InProgress(chp)
 			// Derive tasks from each goal
 			Tasks := pj.DeriveTasksFromGoal(goal, vision.Description)
 			chp <- true
 			for {
 				fmt.Printf("\nTasks: \n")
+				pj.AllBuilder.WriteString("\nTasks: \n")
 				lengoal = len(Tasks)
 				t = 1
 				for _, task := range Tasks {
@@ -176,10 +192,12 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 					fmt.Println("\n Invalid Input!!!!")
 					continue
 				} else{
+					task := Tasks[num-1]
+					fmt.Printf("\nTasks: %s\n", task.Description)
 					for {
-						task := Tasks[num-1]
-						fmt.Printf("\nTasks: %s\n", task.Description)
+						pj.AllBuilder.WriteString(fmt.Sprintf("Tasks %d: %s\n", num, task.Description))
 						fmt.Printf("\nSub-Tasks: \n")
+						pj.AllBuilder.WriteString("\nSub-Tasks: \n")
 						lengoal = len(task.SubTask)
 						y = 1
 						for _, subtask := range task.SubTask {
@@ -200,18 +218,41 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 							sub := task.SubTask[num-1]
 							fmt.Printf("\nSub-Tasks: %s\n", sub)
 							if strings.TrimSpace(sub) != "" {
-								code = pj.Developer(vision.Description, goal.Description, task.Description, sub, code)
-								fmt.Printf("The Code:\n%s\nEnd of Code", code)
+								execOut := pj.Executor(pj.Output.Code)				
+								for{
+									pj.AllBuilder.WriteString(fmt.Sprintf("Sub-Tasks %d: %s\n", num, sub))
+									pj.AllBuilder.WriteString(fmt.Sprintf("\nCode: %s\n", pj.Output.Code))
+									pj.AllBuilder.WriteString(fmt.Sprintf("\nExec Output: %s\n", execOut))
+									input := pj.AllBuilder.String()
+									pj.Output = pj.AutoCodeDeveloper(input, task.Description)	
+									execOut = pj.Executor(pj.Output.Code)
+									if strings.Contains(execOut, "Failed"){
+										continue
+									}else{
+										break
+									}
+								}
 							}
 							fmt.Print("\nEnter your next task or sub-task and Press Enter or Press Enter to continue? \n\n")
 							inputCode, _ := reader.ReadString('\n')
 							inputCode = strings.TrimSpace(inputCode)
-							if inputCode != "" {
-								code = pj.Developer(vision.Description, goal.Description, task.Description, inputCode, code)
-								fmt.Printf("The Code:\n%s\nEnd of Code", code)
-							} else {
-								code = fmt.Sprintf("%s\nEnhance the provided Go code snippets to integrate:\n", code)
-							}
+							if inputCode != "" {				
+								execOut := pj.Executor(pj.Output.Code)				
+								for{
+									pj.AllBuilder.WriteString(fmt.Sprintf("\nSub-Task %ds: %s\n", num, inputCode))
+									pj.AllBuilder.WriteString(fmt.Sprintf("\nCode: %s\n", pj.Output.Code))
+									pj.AllBuilder.WriteString(fmt.Sprintf("\nExec Output: %s\n", execOut))
+									input := pj.AllBuilder.String()
+									fmt.Println("b4 AutoCodeDeveloper: ", input)
+									pj.Output = pj.AutoCodeDeveloper(input, task.Description)	
+									execOut = pj.Executor(pj.Output.Code)
+									if strings.Contains(execOut, "Failed"){
+										continue
+									}else{
+										break
+									}
+								}
+							} 
 						}
 					}
 				}
@@ -220,12 +261,18 @@ func (pj *Project) ManualRun(vision *model.Vision, reader *bufio.Reader) {
 	}
 }
 func (pj *Project) AutomaticRun(vision *model.Vision) {
-	code := `package main
+	pj.Output.Code = `
+	package main
 
 	import "fmt"
-	
+
+	// Worker interface defines the methods that all workers should implement
+	type Worker interface {
+		
+	}
+
 	func main() {
-		fmt.Println("Hello, World!")
+
 	}
 	`
 	r := 1
@@ -236,21 +283,37 @@ func (pj *Project) AutomaticRun(vision *model.Vision) {
 	for {
 		for k, goal := range vision.Goals {
 			pj.AllBuilder.WriteString(fmt.Sprintf("\nGoal %d: %s\n", r, k))
-			r++
 			input := pj.AllBuilder.String()
-			fmt.Println(input)
-			code = pj.AutoDeveloper(input, goal.Description)		
-			
+			pj.Output = pj.AutoDeveloper(input, goal.Description)	
+			fmt.Printf("\nGoal %d: %s\n", r, k)
+			fmt.Printf("\nCode Reasoning: %s\n", pj.Output.Resoning)	
+			fmt.Printf("\nCode Reports:\n")	
+			for x, re := range pj.Output.Report {
+				fmt.Printf("%d. %v", x+1, re)	
+			}
 			//Derive tasks from each goal
 			Tasks := pj.DeriveTasksFromGoal(goal, vision.Description)
 			t = 1
 			for _, task := range Tasks {
 				pj.AllBuilder.WriteString(fmt.Sprintf("\n Tasks %d: %s\n", t, task.Description))
 				t++
-				input = pj.AllBuilder.String()
-				input = fmt.Sprintf("%s\nCode: %s", input, code)
-				fmt.Println(input)
-				code = pj.AutoCodeDeveloper(input, goal.Description)		
+				pj.AllBuilder.WriteString(fmt.Sprintf("\nCode: %s", pj.Output.Code))
+				runOutput := pj.Executor(pj.Output.Code)
+				for{
+					pj.AllBuilder.WriteString(fmt.Sprintf("\nExec Output: %s", runOutput))
+					input = pj.AllBuilder.String()
+					pj.Output = pj.AutoCodeDeveloper(input, task.Description)	
+					fmt.Printf("\nGoal %d: %s\n", r, k)
+					fmt.Printf("\nCode Reasoning: %s\n", pj.Output.Resoning)	
+					fmt.Printf("\nCode Reports:\n")	
+					time.Sleep(time.Second *2)
+					runOutput = pj.Executor(pj.Output.Code)
+					if strings.Contains(runOutput, "Failed"){
+						continue
+					}else{
+						break
+					}
+				}
 				// y = 1
 				// for _, sub := range task.SubTask {
 				// 	pj.AllBuilder.WriteString(fmt.Sprintf("\n  Sub-Tasks %d: %s\n", y, sub))
@@ -260,59 +323,89 @@ func (pj *Project) AutomaticRun(vision *model.Vision) {
 				// 	code = fmt.Sprintf("%s\nEnhance the provided Go code snippets to integrate:\n", code)	
 				// }
 			}
+			r++
 		}
 	}
 }
-func (pj *Project) Developer(vision, goal, task, sub, code string) string {
+func (pj *Project) AutoDeveloper(VisionGoal, goal string) CodeResponse {
 	chp := make(chan bool)
 	go pj.InProgress(chp)
-	// code, _ = pj.AI.PromptAI(CodeSummarizer, code)
-	input := fmt.Sprintf("Vision: %s\nGoal: %s\nTask: %s\nSub-Task: %s\n", vision, goal, task,sub) 
-	code, _ = pj.AI.PromptAI(CodePrompt1, input)
+	code, _ := pj.AI.PromptAI(CodePrompt1, VisionGoal)
 	if strings.Contains(code, "No-code") {
 		chp <- true		
 		fmt.Printf("\nCurrent task requires your action: %s\n\n", code)
-		return ""
+		return CodeResponse{}
 	}
-	code = strings.Replace(code, "```go", fmt.Sprintf("//%s", sub), -1)
-	code = strings.Replace(code, "```", "", -1)
+	many := strings.Split(code, "```go")
+	if len(many) >= 2 {
+		pj.Output.Resoning = many[0]
+		code = many[1]
+		many = strings.Split(code, "```")
+		pj.Output.Code = many[0]
+		for k, v := range many{
+			if k == 0{
+				continue
+			}
+			pj.Output.Report = append(pj.Output.Report, v)
+		}
+	}
 	// Define the file path
 	chp <- true		
-	codeOnFile(pj, code)
-	return code
+	codeOnFile(pj, pj.Output.Code)
+	return pj.Output
 }
-func (pj *Project) AutoDeveloper(code, goal string) string {
+func (pj *Project)Executor(code string)string {
+	// Step 1: Write the Go code to a temporary file
+	tmpFile, err := ioutil.TempFile("", "*.go")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name()) // Clean up
+
+	if _, err := tmpFile.Write([]byte(code)); err != nil {
+		tmpFile.Close()
+		log.Fatal(err)
+	}
+	tmpFile.Close()
+
+	// Step 2: Use exec.Command to run 'go run <tempfile>'
+	cmd := exec.Command("go", "run", tmpFile.Name())
+	byteOut, err := cmd.CombinedOutput()
+	output := string(byteOut)
+	if err != nil {
+		output = fmt.Sprintf("%s: Failed to execute 'go run': %v \n", output,  err)
+	}
+	// Step 3: Process output
+	return output
+}
+func (pj *Project) AutoCodeDeveloper(VisionGoalTaskCode, task string) CodeResponse{
 	chp := make(chan bool)
 	go pj.InProgress(chp)
-	code, _ = pj.AI.PromptAI(CodePrompt1, code)
+	code, _ := pj.AI.PromptAI(CodePrompt3, VisionGoalTaskCode)
 	if strings.Contains(code, "No-code") {
 		chp <- true		
 		fmt.Printf("\nCurrent task requires your action: %s\n\n", code)
-		return ""
+		return CodeResponse{}
 	}
-	code = strings.Replace(code, "```go", fmt.Sprintf("//%s", goal), -1)
-	code = strings.Replace(code, "```", "", -1)
+	many := strings.Split(code, "```go")
+	if len(many) >= 2 {			
+		pj.Output.Resoning = many[0]
+		code = many[1]
+		many = strings.Split(code, "```")
+		pj.Output.Code = many[0]
+		for k, v := range many{
+			if k == 0{
+				continue
+			}
+			pj.Output.Report = append(pj.Output.Report, v)
+		}
+	}
 	// Define the file path
 	chp <- true		
-	codeOnFile(pj, code)
-	return code
+	codeOnFile(pj, pj.Output.Code)
+	return pj.Output
 }
-func (pj *Project) AutoCodeDeveloper(code, task string) string {
-	chp := make(chan bool)
-	go pj.InProgress(chp)
-	code, _ = pj.AI.PromptAI(CodePrompt2, code)
-	if strings.Contains(code, "No-code") {
-		chp <- true		
-		fmt.Printf("\nCurrent task requires your action: %s\n\n", code)
-		return ""
-	}
-	code = strings.Replace(code, "```go", fmt.Sprintf("//%s", task), -1)
-	code = strings.Replace(code, "```", "", -1)
-	// Define the file path
-	chp <- true		
-	codeOnFile(pj, code)
-	return code
-}
+
 func codeOnFile(pj *Project, code string) {
 	pj.FilePath = fmt.Sprintf("../output/app%d.go", pj.Fnum)
 	pj.Fnum++
